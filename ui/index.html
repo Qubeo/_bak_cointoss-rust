@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>holoclient test</title>
+  <meta charset="UTF-8"/>
+</head>
+
+<body>
+
+  <form id="form">
+    <input type="text" id="message"/>
+    <input type="submit" value="Send" />
+  </form>
+
+  <div id="output"></div>
+
+  <script type="text/javascript" src="holoclient.js"></script>
+
+  <script type="text/javascript">
+    // const url =  'wss://echo.websocket.org'
+    // const url =  'ws://192.168.1.100:8888/'
+    const url =  'ws://localhost:8888/'
+    const instance =  'test-instance' //'k+XyBjRtywLfXVCRkPfHXMOFbJ9EEmiq4DdMU2AYlGo=' // How do I get the instance?
+    const zome =  'qa'
+    const trait = 'main'
+    const fn =   'add_question'
+
+  </script>
+    
+    <div id="heading">
+      <h1>Cointoss!</h1>
+      <h2>A Holochain Sample Application.</h2>
+      <div id="handle_block">Your Handle: <a id="handle" href="#"></a></div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 players">
+          <div class="panel panel-default">
+            <div class="panel-heading">players</div>
+            <div class="panel-body">
+              <ul id="players">
+              </ul>
+            </div>
+          </div>
+          <div class="row" id="req-toss-button-row">
+            <button id="req-toss-button" type="button" class="btn btn-primary">Request Toss</button>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="panel panel-default">
+            <div id="tosses-header" class="panel-heading">Toss History</div>
+            <div class="panel-body">
+              <ul id="tosses">
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="setHandleDialog" tabindex="-1" role="dialog" aria-labelledby="setHandleModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="setHandleModalLabel">Set Handle</h4>
+          </div>
+          <div class="modal-body">
+            <form>
+              <div class="form-group">
+                <label for="myHandle">Handle</label>
+                <input type="text" class="form-control" id="myHandle" placeholder="@handle">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button id="setHandleButton" type="button" class="btn btn-primary">Set Handle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
