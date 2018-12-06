@@ -11,6 +11,9 @@ extern crate holochain_core_types_derive;
 #[macro_use]
 extern crate serde_json;
 
+use std::io;
+use rand::Rng;
+
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
 use hdk::holochain_core_types::{
@@ -75,28 +78,88 @@ pub struct toss_result_schema {
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
 // var me = App.Key.Hash ?? // Where does this belong? And what type is it? HashString?
 
-pub fn handle_who_am_I() -> HashString {};
+pub fn handle_who_am_I() -> JsonString {
+    
+    return json!(HashString::new()).into();
+    
+}
 
-pub fn set_handle(handle: HashString) -> {};
+
+pub fn handle_set_handle(handle: HashString) -> JsonString {
+    return json!(HashString::new()).into();
+}
+
 
 // returns all the handles in the directory
-pub fn handle_get_handles() -> {};
+pub fn handle_get_handles() -> JsonString {
+    return "TEST".into();
+}
 
 // returns the handle of an agent by looking it up on the user's DHT entry, the last handle will be the current one?
-pub fn handle_get_handle(handle: HashString) -> HashString {};
+pub fn handle_get_handle(handle: HashString) -> JsonString {
+    return HashString::new().into();
+}
 
-pub fn handle_get_my_handle() -> {};
+pub fn handle_get_my_handle() -> JsonString { 
+    return HashString::new().into();
+}
 
 // gets the AgentID (userAddress) based on handle
-pub fn handle_get_agent(handle: HashString) -> Address {};
+pub fn handle_get_agent(handle: HashString) -> JsonString {
+    return Address::new().into();
+}
 
-pub fn handle_request_toss() -> {};
+pub fn handle_get_toss_history() -> JsonString {
+        return HashString::new().into();
+}
 
-pub fn handle_confirm_toss() -> {};
+/*
+/ pub fn handle_request_toss()
+/ Request the toss - initiating the game by doing the first seed commit and sending the request to the agent through gossip (?)
+*/
+pub fn handle_request_toss(toss: toss_schema) -> JsonString {
 
-// Commit ???
-// pub fn handle_commit_seed() -> {};
-// pub fn handle_confirm_seed() -> {};
+    let seed = rand::thread_rng().gen_range(0, 10);
+    println!("Generated seed: {}", seed);
+    handle_commit_seed(seed);
+    
+    return HashString::new().into();
+}
+
+// Commit functions - should they be a part of the zome? Or private? Or both?
+fn handle_confirm_seed() -> JsonString {
+        return HashString::new().into();
+}
+
+fn handle_commit_toss() -> JsonString {
+    return HashString::new().into();
+}
+
+fn handle_confirm_toss(toss: toss_schema) -> JsonString {
+    return HashString::new().into();
+}
+
+
+/*
+/ fn commit_seed()
+/ return: ???
+*/
+fn handle_commit_seed(seed: i32) -> JsonString {
+
+    // Validate if 9 <= seed >= 0 
+    // Generate salt
+    // Hash the salt + seed string (?)
+
+    // Commit seed to own chain
+    // Return 
+    return HashString::new().into();
+}
+
+fn generate_salt() -> JsonString {
+    return HashString::new().into();
+}
+
+
 
 
 define_zome! {
@@ -106,10 +169,12 @@ define_zome! {
         entry!(
             name: "handle",
             description: "",
-            native_type: HashString,  // Q: Or Hash? Or Json? Or JsonString?
             sharing: Sharing::Public,
-            validation_package: || { },
-            validation: || { Ok(()) }
+            native_type: HashString,  // Q: Or Hash? Or Json? Or JsonString?
+            validation_package: || {
+                hdk::ValidationPackageDefinition::Entry
+             },
+            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
         ),
 
         /* Entry: ???
@@ -128,30 +193,36 @@ define_zome! {
         entry!(
             name: "toss",
             description: "",
-            native_type: toss_schema; // Q: Or? Json? JsonString?
             sharing: Sharing::Public,
-            validation_package: || { },
-            validation: || { Ok(()) }
+            native_type: toss_schema, // Q: Or? Json? JsonString?
+            validation_package: || { 
+                hdk::ValidationPackageDefinition::Entry
+            },
+            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
         ),
 
         // Entry: 
         entry!(
             name: "toss_result",
             description: "",
-            native_type: toss_result_schema; // Q: Or?
             sharing: Sharing::Public,
-            validation_package: || { },
-            validation: || { Ok(()) }
+            native_type: toss_result_schema, // Q: Or?
+            validation_package: || { 
+                hdk::ValidationPackageDefinition::Entry
+            },
+            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
         ),
 
         entry!(
             name: "seed",
             description: "",
-            native_type: , 
             sharing: Sharing::Private,
-            validation_package: || { },
-            validation: || { Ok(()) }
-        ),
+            native_type: i32, 
+            validation_package: || {
+                hdk::ValidationPackageDefinition::Entry
+             },
+            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
+        )
 
         /* Entry: ??
         entry!(
@@ -176,11 +247,11 @@ define_zome! {
         main (Public) {
 			who_am_I: {
 				inputs: | |,
-				outputs: |result: JsonString|,
-				handler: handle_who_am_I
+				outputs: |result: JsonString|,      // Q: Not sure about the return type. HashString? Or everything here JsonString?
+				handler: handle_who_am_I            // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
 			}
-			set_handle: {
-				inputs: |handle: String|,
+    		set_handle: {
+				inputs: |handle: HashString|,
 				outputs: |result: JsonString|,
 				handler: handle_set_handle
 			}
@@ -190,7 +261,7 @@ define_zome! {
 				handler: handle_get_handles
 			}
             get_handle: {
-				inputs: | |,
+				inputs: |agentKey: HashString|,
 				outputs: |result: JsonString|,
 				handler: handle_get_handle
 			}
@@ -200,17 +271,17 @@ define_zome! {
 				handler: handle_get_my_handle
 			}
             get_agent: {
-				inputs: | |,
+				inputs: |handle: HashString|,
 				outputs: |result: JsonString|,
 				handler: handle_get_agent
 			}
             request_toss: {
-				inputs: | |,
+				inputs: |request: toss_schema |,
 				outputs: |result: JsonString|,
 				handler: handle_request_toss
 			}
             confirm_toss: {
-				inputs: | |,
+				inputs: |toss: toss_schema|,
 				outputs: |result: JsonString|,
 				handler: handle_confirm_toss
 			}
