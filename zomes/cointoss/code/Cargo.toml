@@ -12,6 +12,8 @@ hdk = { git = "https://github.com/holochain/holochain-rust" , branch = "master" 
 holochain_wasm_utils = { git = "https://github.com/holochain/holochain-rust" , branch = "master" }
 holochain_core_types_derive = { git = "https://github.com/holochain/holochain-rust" , branch = "master" }
 rand = "0.4.0"
+multihash = "*"
+log = "*"
 
 [lib]
 path = "src/lib.rs"
