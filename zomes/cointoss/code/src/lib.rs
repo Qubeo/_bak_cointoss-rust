@@ -18,6 +18,7 @@ extern crate multihash;
 use std::io;
 use rand::Rng;
 use multihash::{encode, decode, Hash};
+// use snowflake;
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
@@ -27,9 +28,11 @@ use hdk::holochain_core_types::{
     entry::Entry,
     dna::zome::entry_types::Sharing,
     entry::entry_type::EntryType,
-    json::JsonString,
-    cas::content::Address
+    json::{ JsonString, RawString},
+    cas::content::Address,
 };
+
+use hdk::api::AGENT_ADDRESS;
 
 // Q: Include the "toss.rs" module? Or?
 // mod toss;
@@ -52,6 +55,11 @@ pub struct TossResultSchema {
     // pub required:  ["toss","result","time_stamp"] // Q: Validation rules?
 }
 
+#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+pub struct SeedSchema {
+    pub seed: u32
+}
+
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
 // var me = App.Key.Hash ?? // Where does this belong? And what type is it? HashString?
 
@@ -61,19 +69,108 @@ pub fn handle_who_am_I() -> JsonString {
     // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it?
  
     // TODO: VERY temporary - just returning a hard-coded HashString now.
-    return set_my_key().into();
+    
+    return "prdel".into();
 }
 
 
-pub fn handle_set_handle(_handle: HashString) -> JsonString {
-    return json!(HashString::new()).into();
+pub fn handle_set_handle(_handle: String) -> JsonString {
+   
+    // let handle_hash = HashString::encode_from_str(&_handle, Hash::SHA2256);
+
+    // Q: It works with the JsonString(RawString) wrapping. How come?
+    // What are the allowed forms for the argument? Can I see the memory / byte structure somewhere?    
+    let raw_handle = JsonString::from(RawString::from(_handle.clone()));
+
+    // TODO: Napsat návrh na "formatted" debug! macro?
+    hdk::debug("handle_set_handle()::_handle: ");
+    hdk::debug(raw_handle.clone());
+   
+    let handle_entry = Entry::new(EntryType::App("handle".into()), raw_handle); // Q: my_key? &my_key? Nebo "prdel"?
+    hdk::debug(handle_entry.to_string());
+    
+    // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs.
+    // TODO: Ask in Mattermost.
+    let handle_address: JsonString = match hdk::commit_entry(&handle_entry) {
+
+        // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "handle") {
+            Ok(address) => json!({ "address": address }).into(),
+            Err(hdk_err) => { hdk_err.into() }
+        // },
+        // Err(hdk_err) => hdk_err.into()
+    };
+    
+
+    // let my_key_entry_address = match hdk::get_entry(hdk::entry_address(&my_key_entry)) {
+
+    hdk::debug(handle_address.clone());
+
+    return handle_address;     
 }
+
+    /*
+     var handles = getLinks(App.Key.Hash, 'handle');
+  if (handles.length > 0)
+  {
+    if (anchorExists('handle', handle) === 'false') {
+      var oldKey = handles[0].Hash;
+      var key = update('handle', anchor('handle', handle), oldKey);
+      commit('handle_links', {
+        Links: [
+          {
+            Base: App.Key.Hash,
+            Link: oldKey,
+            Tag: 'handle',
+            LinkAction: HC.LinkAction.Del
+          },
+          { Base: App.Key.Hash, Link: key, Tag: 'handle' }
+        ]
+      });
+
+      commit('directory_links', {
+        Links: [
+          {
+            Base: App.DNA.Hash,
+            Link: oldKey,
+            Tag: 'handle',
+            LinkAction: HC.LinkAction.Del
+          },
+          { Base: App.DNA.Hash, Link: key, Tag: 'handle' }
+        ]
+      });
+      return key;
+    }
+    else {
+      // debug('HandleInUse')
+      return 'HandleInUse';
+    }
+  }
+
+  if (anchorExists('handle', handle) === 'false') {
+    var newHandleKey = commit('handle', anchor('handle', handle));
+    commit('handle_links', {
+      Links: [{ Base: App.Key.Hash, Link: newHandleKey, Tag: 'handle' }]
+    });
+    commit('directory_links', {
+      Links: [{ Base: App.DNA.Hash, Link: newHandleKey, Tag: 'directory' }]
+    });
+    return newHandleKey;
+  } else {
+    // debug('HandleInUse')
+    return 'HandleInUse';
+  } */
+
 
 
 // returns all the handles in the directory
 pub fn handle_get_handles() -> JsonString {
-    return "TEST".into();
+
+    // TODO: Just finding out what this does. Copied from the HoloChat to test it.
+    // It doesn't work here. How come it works in the HoloChat?? (Or does it?)
+
+    return "prdelgethandle".into();
 }
+
 
 // returns the handle of an agent by looking it up on the user's DHT entry, the last handle will be the current one?
 pub fn handle_get_handle(_handle: HashString) -> JsonString {
@@ -86,11 +183,9 @@ pub fn handle_get_my_handle() -> JsonString {
 
 // gets the AgentID (userAddress) based on handle
 pub fn handle_get_agent(_handle: HashString) -> JsonString {
-    return Address::new().into();
-}
 
-pub fn handle_get_toss_history() -> JsonString {
-        return HashString::new().into();
+    
+    return Address::new().into();
 }
 
 /*
@@ -101,25 +196,51 @@ pub fn handle_request_toss(_toss: TossSchema) -> JsonString {
 
     let seed = rand::thread_rng().gen_range(0, 10);
     println!("Generated seed: {}", seed);
-    commit_seed(seed);
+    // commit_seed(seed);
     
     return HashString::new().into();
 }
 
+pub fn handle_get_toss_history() -> JsonString {
+        
+        let prdel = "prdel".to_string();
+        let prdel_hash = HashString::encode_from_str(&prdel.clone(), Hash::SHA2256);
+
+        let toss = TossSchema {
+            initiator:  prdel_hash.clone(),
+            initiator_seed_hash: prdel_hash.clone(),
+            responder: prdel_hash.clone(),
+            responder_seed_hash: prdel_hash.clone(),
+            call: true
+        };
+        
+        return json!(prdel_hash).into();
+}
+
 fn handle_confirm_toss(_toss: TossSchema) -> JsonString {
-    return HashString::new().into();
+// fn handle_confirm_toss(_toss: JsonString) -> JsonString {
+  
+    hdk::debug("_toss: ");
+    hdk::debug(_toss);
+    
+  /*  let toss_entry = Entry::new(EntryType::App("toss".into()), _toss); // Q: my_key? &my_key? Nebo "prdel"?
+    
+
+    // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs.
+    // TODO: Ask in Mattermost.
+    let toss_address: JsonString = match hdk::commit_entry(&toss_entry) {
+         Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "toss") {
+            Ok(address) => json!({ "address": address }).into(),
+            Err(hdk_err) => { hdk_err.into() }
+         },
+         Err(hdk_err) => hdk_err.into()
+    };*/
+    
+    return json!("prdel").into(); //toss_address.into();
 }
 
-fn set_my_key() -> HashString {
 
-    //let mut hasher = DefaultHasher::new();
-
-    let my_key = HashString::encode_from_str("prdel", Hash::SHA2256);
-    hdk::debug("my_key: ");
-    hdk::debug(&my_key);
-
-    return my_key; 
-}
+  
 
 // Commit functions - should they be a part of the zome? Or private? Or both?
 
@@ -127,22 +248,39 @@ fn set_my_key() -> HashString {
 / fn commit_seed()
 / return: ???
 */
-fn commit_seed(_seed: i32) -> JsonString {
+fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
 
     // Validate if 9 <= seed >= 0 
     // Generate salt
     // Hash the salt + seed string (?)
-
     // Commit seed to own chain
     // Return 
-    return HashString::new().into();
+
+    //let entry_arg = JsonString::from(RawString::from(_seed));
+    //hdk::debug("Raw seed: ");
+    //hdk::debug(entry_arg.clone());
+
+    let handle_entry = Entry::new(EntryType::App("seed".into()), _seed); // Q: my_key? &my_key? Nebo "prdel"?
+    hdk::debug(handle_entry.to_string());
+    
+    let seed_address: JsonString = match hdk::commit_entry(&handle_entry) {
+
+        // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "seeds") {
+            Ok(address) => json!({ "address": address }).into(),
+            Err(hdk_err) => { hdk_err.into() }
+        // },
+        // Err(hdk_err) => hdk_err.into()
+    };
+
+    return seed_address.into();
 }
 
 fn confirm_seed() -> JsonString {
         return HashString::new().into();
 }
 
-fn commit_toss() -> JsonString {
+fn commit_toss(_toss: TossSchema) -> JsonString {
+    
     return HashString::new().into();
 }
 
@@ -159,11 +297,11 @@ define_zome! {
             name: "handle",
             description: "",
             sharing: Sharing::Public,
-            native_type: HashString,  // Q: Or Hash? Or Json? Or JsonString?
+            native_type: String,  // Q: Or HashString?
             validation_package: || {
                 hdk::ValidationPackageDefinition::Entry
              },
-            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
+            validation: |_handle: String, _ctx: hdk::ValidationData| { Ok(()) }
         ),
 
         /* Entry: ???
@@ -187,7 +325,7 @@ define_zome! {
             validation_package: || { 
                 hdk::ValidationPackageDefinition::Entry
             },
-            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
+            validation: |_toss: TossSchema, _ctx: hdk::ValidationData| { Ok(()) }
         ),
 
         // Entry: 
@@ -199,18 +337,29 @@ define_zome! {
             validation_package: || { 
                 hdk::ValidationPackageDefinition::Entry
             },
-            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
+            validation: |_toss_result: TossResultSchema, _ctx: hdk::ValidationData| { Ok(()) }
         ),
 
         entry!(
             name: "seed",
             description: "",
             sharing: Sharing::Private,
-            native_type: i32, 
+            native_type: SeedSchema, 
             validation_package: || {
                 hdk::ValidationPackageDefinition::Entry
              },
-            validation: |_address: Address, _ctx: hdk::ValidationData| { Ok(()) }
+            validation: |_seed: SeedSchema, _ctx: hdk::ValidationData| { Ok(()) },
+            links: [
+                from!(
+                    "%agent_id",
+                    tag: "agent",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::ChainFull
+                    },
+                    validation: |_source: Address, _target: Address, _ctx: hdk::ValidationData| {
+                        Ok(())
+                    })
+                ]
         )
 
         /* Entry: ??
@@ -235,7 +384,7 @@ define_zome! {
          // TODO workaround around not-yet-implemented hdk::api::AGENT_ADDRESS
          // Commit a tomporarily created agent hash to my chain and return the entry address?
             {
-                // set_my_key();        
+                //handle_set_handle(&AGENT_ADDRESS);
                 Ok(())
             }
          }
@@ -248,7 +397,7 @@ define_zome! {
 				handler: handle_who_am_I            // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
 			}
     		set_handle: {
-				inputs: |handle: HashString|,
+				inputs: |handle: String|,
 				outputs: |result: JsonString|,      // Q: How does this syntax work? Closure arguments without follow up function body? :o
 				handler: handle_set_handle
 			}
@@ -286,7 +435,12 @@ define_zome! {
 				inputs: | |,
 				outputs: |result: JsonString|,
 				handler: handle_get_toss_history
-			}            
+			}
+            commit_seed: {
+                inputs: |seed: SeedSchema|,
+                outputs: |result: JsonString|,
+                handler: handle_commit_seed
+            }            
        }
     }
 }
