@@ -57,8 +57,8 @@ pub struct TossResultSchema {
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct SeedSchema {
-    salt: String,    
-    seed_value: u8
+    pub salt: String,    
+    pub seed_value: u8
 }
 
 

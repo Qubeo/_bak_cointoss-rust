@@ -33,17 +33,16 @@ mod entries;
 use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema};
 
 
-
-
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
-// var me = App.Key.Hash ?? // Where does this belong? And what type is it? HashString?
+// var me = App.Key.Hash ?? // Q: Where does this belong? And what type is it? HashString?
 
-pub fn handle_who_am_I() -> JsonString {
-    
+pub fn handle_get_my_address() -> JsonString {
+  
+    // AGENT_ADDRESS.clone().into();
+
     // TODO: Not fully implemented AGENT_ADDRESS in the current HDK release yet.
     // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it? 
-    // TODO: VERY temporary - just returning a hard-coded HashString now.
-    
+    // TODO: VERY temporary - just returning a hard-coded HashString now.    
     return "prdel".into();
 }
 
@@ -56,17 +55,14 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     // What are the allowed forms for the argument? Can I see the memory / byte structure somewhere?    
     let raw_handle = JsonString::from(RawString::from(_handle.clone()));
 
-    // hdk::debug(CTEntryType::seed);
-
-    // TODO: Napsat návrh na "formatted" debug! macro?
+    // TODO: Napsat návrh na "formatted" hdk::debug! macro?
     hdk::debug("handle_set_handle()::_handle: ");
     hdk::debug(raw_handle.clone());
    
     let handle_entry = Entry::new(EntryType::App(CTEntryType::handle.to_string()), raw_handle); // Q: my_key? &my_key? Nebo "prdel"?
     hdk::debug(handle_entry.to_string());
     
-    // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs.
-    // TODO: Ask in Mattermost.
+    // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs. How to?
     let handle_address: JsonString = match hdk::commit_entry(&handle_entry) {
 
         // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "handle") {
@@ -76,9 +72,7 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
         // Err(hdk_err) => hdk_err.into()
     };
     
-
     // let my_key_entry_address = match hdk::get_entry(hdk::entry_address(&my_key_entry)) {
-
     hdk::debug(handle_address.clone());
 
     return handle_address;     
@@ -143,7 +137,6 @@ pub fn handle_get_handles() -> JsonString {
 
     // TODO: Just finding out what this does. Copied from the HoloChat to test it.
     // It doesn't work here. How come it works in the HoloChat?? (Or does it?)
-
     return "prdelgethandle".into();
 }
 
@@ -168,11 +161,14 @@ pub fn handle_get_agent(_handle: HashString) -> JsonString {
 / pub fn handle_request_toss()
 / Request the toss - initiating the game by doing the first seed commit and sending the request to the agent through gossip (?)
 */
-pub fn handle_request_toss(_toss: TossSchema) -> JsonString {
 
+// TODO: This is wrong, I believe. The argument should be the agent (address? handle?), toss should be the output.
+pub fn handle_request_toss(_toss: TossSchema) -> JsonString {
+    
     let seed = rand::thread_rng().gen_range(0, 10);
     println!("Generated seed: {}", seed);
-    // commit_seed(seed);
+
+    handle_commit_seed(SeedSchema { salt: "salt".to_string(), seed_value: seed });
     
     return HashString::new().into();
 }
@@ -216,8 +212,6 @@ fn handle_confirm_toss(_toss: TossSchema) -> JsonString {
 }
 
 
-  
-
 // Commit functions - should they be a part of the zome? Or private? Or both?
 
 /*
@@ -236,7 +230,7 @@ fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
     //hdk::debug("Raw seed: ");
     //hdk::debug(entry_arg.clone());
 
-    let seed_entry = Entry::new(EntryType::App(CTEntryType::seed.to_string()), _seed); // Q: my_key? &my_key? Nebo "prdel"?
+    let seed_entry = Entry::new(EntryType::App(CTEntryType::seed.to_string()), _seed);
     hdk::debug(seed_entry.to_string());
     
     let seed_address: JsonString = match hdk::commit_entry(&seed_entry) {
@@ -252,11 +246,10 @@ fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
 }
 
 fn confirm_seed() -> JsonString {
-        return HashString::new().into();
+    return HashString::new().into();
 }
 
-fn commit_toss(_toss: TossSchema) -> JsonString {
-    
+fn commit_toss(_toss: TossSchema) -> JsonString {   
     return HashString::new().into();
 }
 
@@ -267,18 +260,6 @@ fn generate_salt() -> JsonString {
 
 define_zome! {
     entries: [
-        
-        /* Entry: ???
-        entry!(
-            name: "handle_links",
-            native_type:
-        ), */
-
-        /* Entry: ???
-        entry!(
-            name: "directory_links",
-            native_type:
-        ), */
 
         entries::handle_definition(),
         entries::toss_definition(),
@@ -287,21 +268,26 @@ define_zome! {
 
         // TODO: Q: It seems I can define multiple entries of the same type / content. Isn't this a bug?
 
-        /* Entry: ??
+       /* Q: Link entries. What to do with those?
+        entry!(
+            name: "handle_links",
+            native_type:
+        ),
+        entry!(
+            name: "directory_links",
+            native_type:
+        ), 
         entry!(
             name: "history_link_base",
             native_type:
             sharing: Sharing::Public,
             validation_package: || { },
             validation: || {}
-        ), */
-
-        /* Entry: ??
+        ),
         entry!(
             name: "history_links",
             native_type: links 
         ) */
-
     ]
 
     genesis: || {
@@ -316,10 +302,10 @@ define_zome! {
 
     functions: {
         main (Public) {
-			who_am_I: {
+			get_my_address: {
 				inputs: | |,
 				outputs: |result: JsonString|,      // Q: Not sure about the return type. HashString? Or everything here JsonString?
-				handler: handle_who_am_I            // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
+				handler: handle_get_my_address            // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
 			}
     		set_handle: {
 				inputs: |handle: String|,

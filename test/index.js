@@ -11,28 +11,50 @@ test.createStream()
   .pipe(process.stdout);
 
 // instantiate an app from the DNA JSON bundle
-const app = Container.loadAndInstantiate("dist/bundle.json");
-//const app2 = Container.loadAndInstantiate("dist/bundle.json");
+const app_a = Container.loadAndInstantiate("dist/bundle.json");
+const app_b = Container.loadAndInstantiate("dist/bundle.json");
 
 // activate the new instance
-app.start();
+app_a.start();
+app_b.start();
 
-test('Calls the set_handle() function, expects entry address as a result', (t) => {
+const handle_player_a = "prdelA";
+const handle_player_b = "prdelB";
 
-  const handle1 = "prdel1";
-  const result = app.call("cointoss", "main", "set_handle", { handle: handle1 });
+test('Get my address', (t) => {
+
+  const result_a = app_a.call("cointoss", "main", "get_my_address", {});  
+  const result_b = app_b.call("cointoss", "main", "get_my_address", {});  
+  console.log("Address A, Address B: ");
+  console.log(result_a, result_b);
+
+  //t.deepEqual(result_a, "QmeQPvoUwXXskAJtyBUNPX7ks8MoazmcSvKnvtYTVrBGNM")
+  t.end()
+})
+
+test('Call the set_handle() function, expect entry address as a result', (t) => {
+
+  const result_a = app_a.call("cointoss", "main", "set_handle", { handle: handle_player_a });
+  const result_b = app_b.call("cointoss", "main", "set_handle", { handle: handle_player_b });
 
   console.log("set_handle() result: ");
-  console.log(result);
+  console.log(result_a, result_b);
 
   // t.equal(result);
   t.end();
 })
 
+test('Initiate a toss by calling request_toss()'), (t) => {
+  
+  const result = app_a.call("cointoss", "main", "request_toss", {});
+  console.log(result);
+  t.end();
+}
+
 test('Commit a seed and return the entry address', (t) => {
 
   const seed_schema = { salt: "prdel", seed_value: 22 };
-  const result = app.call("cointoss", "main", "commit_seed", { seed: seed_schema });
+  const result = app_a.call("cointoss", "main", "commit_seed", { seed: seed_schema });
 
   console.log("commit_seed() result: ");
   console.log(result);
