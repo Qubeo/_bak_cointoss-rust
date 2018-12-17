@@ -12,53 +12,28 @@ extern crate holochain_core_types_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate log;
-
 extern crate multihash;
 
 use std::io;
 use rand::Rng;
 use multihash::{encode, decode, Hash};
+use std::fmt;
 // use snowflake;
-
-// see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
-
-use hdk::holochain_core_types::{
+use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org/api/0.0.2/hdk/
     hash::HashString,
     error::HolochainError,
     entry::Entry,
     dna::zome::entry_types::Sharing,
     entry::entry_type::EntryType,
-    json::{ JsonString, RawString},
+    json::{ JsonString, RawString },
     cas::content::Address,
 };
-
 use hdk::api::AGENT_ADDRESS;
+mod entries;
+use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema};
 
-// Q: Include the "toss.rs" module? Or?
-// mod toss;
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub struct TossSchema {
-    pub initiator: Address,          // Q: Or should this be a JSON? Or json_serde? .into()?
-    pub initiator_seed_hash: HashString, 
-    pub responder: Address,         // Q: Or? Shouldn't be hdk's hash::HashString, cas::content::Address or something like that?
-    pub responder_seed_hash: HashString,
-    pub call: bool                  // Q: What the heck is this?
-    // pub required: ["initiator", "initiator_seed_hash", "responder", "responder_seed_hash"]; // Q: How to initialize the field?
-}
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub struct TossResultSchema {
-    pub toss: TossSchema, //Q: Or &TossSchema? Or string, as in the original JS version?
-	pub result: String,    // Q: What format?
-    pub time_stamp: String
-    // pub required:  ["toss","result","time_stamp"] // Q: Validation rules?
-}
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub struct SeedSchema {
-    pub seed: u32
-}
 
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
 // var me = App.Key.Hash ?? // Where does this belong? And what type is it? HashString?
@@ -66,8 +41,7 @@ pub struct SeedSchema {
 pub fn handle_who_am_I() -> JsonString {
     
     // TODO: Not fully implemented AGENT_ADDRESS in the current HDK release yet.
-    // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it?
- 
+    // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it? 
     // TODO: VERY temporary - just returning a hard-coded HashString now.
     
     return "prdel".into();
@@ -82,11 +56,13 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     // What are the allowed forms for the argument? Can I see the memory / byte structure somewhere?    
     let raw_handle = JsonString::from(RawString::from(_handle.clone()));
 
+    // hdk::debug(CTEntryType::seed);
+
     // TODO: Napsat návrh na "formatted" debug! macro?
     hdk::debug("handle_set_handle()::_handle: ");
     hdk::debug(raw_handle.clone());
    
-    let handle_entry = Entry::new(EntryType::App("handle".into()), raw_handle); // Q: my_key? &my_key? Nebo "prdel"?
+    let handle_entry = Entry::new(EntryType::App(CTEntryType::handle.to_string()), raw_handle); // Q: my_key? &my_key? Nebo "prdel"?
     hdk::debug(handle_entry.to_string());
     
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs.
@@ -260,10 +236,10 @@ fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
     //hdk::debug("Raw seed: ");
     //hdk::debug(entry_arg.clone());
 
-    let handle_entry = Entry::new(EntryType::App("seed".into()), _seed); // Q: my_key? &my_key? Nebo "prdel"?
-    hdk::debug(handle_entry.to_string());
+    let seed_entry = Entry::new(EntryType::App(CTEntryType::seed.to_string()), _seed); // Q: my_key? &my_key? Nebo "prdel"?
+    hdk::debug(seed_entry.to_string());
     
-    let seed_address: JsonString = match hdk::commit_entry(&handle_entry) {
+    let seed_address: JsonString = match hdk::commit_entry(&seed_entry) {
 
         // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "seeds") {
             Ok(address) => json!({ "address": address }).into(),
@@ -292,18 +268,6 @@ fn generate_salt() -> JsonString {
 define_zome! {
     entries: [
         
-        // Entry: "handle" for __________? The player?
-        entry!(
-            name: "handle",
-            description: "",
-            sharing: Sharing::Public,
-            native_type: String,  // Q: Or HashString?
-            validation_package: || {
-                hdk::ValidationPackageDefinition::Entry
-             },
-            validation: |_handle: String, _ctx: hdk::ValidationData| { Ok(()) }
-        ),
-
         /* Entry: ???
         entry!(
             name: "handle_links",
@@ -316,51 +280,12 @@ define_zome! {
             native_type:
         ), */
 
-        // Entry: 
-        entry!(
-            name: "toss",
-            description: "",
-            sharing: Sharing::Public,
-            native_type: TossSchema, // Q: Or? Json? JsonString?
-            validation_package: || { 
-                hdk::ValidationPackageDefinition::Entry
-            },
-            validation: |_toss: TossSchema, _ctx: hdk::ValidationData| { Ok(()) }
-        ),
+        entries::handle_definition(),
+        entries::toss_definition(),
+        entries::toss_result_definition(),
+        entries::seed_definition()
 
-        // Entry: 
-        entry!(
-            name: "toss_result",
-            description: "",
-            sharing: Sharing::Public,
-            native_type: TossResultSchema, // Q: Or?
-            validation_package: || { 
-                hdk::ValidationPackageDefinition::Entry
-            },
-            validation: |_toss_result: TossResultSchema, _ctx: hdk::ValidationData| { Ok(()) }
-        ),
-
-        entry!(
-            name: "seed",
-            description: "",
-            sharing: Sharing::Private,
-            native_type: SeedSchema, 
-            validation_package: || {
-                hdk::ValidationPackageDefinition::Entry
-             },
-            validation: |_seed: SeedSchema, _ctx: hdk::ValidationData| { Ok(()) },
-            links: [
-                from!(
-                    "%agent_id",
-                    tag: "agent",
-                    validation_package: || {
-                        hdk::ValidationPackageDefinition::ChainFull
-                    },
-                    validation: |_source: Address, _target: Address, _ctx: hdk::ValidationData| {
-                        Ok(())
-                    })
-                ]
-        )
+        // TODO: Q: It seems I can define multiple entries of the same type / content. Isn't this a bug?
 
         /* Entry: ??
         entry!(
@@ -422,12 +347,12 @@ define_zome! {
 				handler: handle_get_agent
 			}
             request_toss: {
-				inputs: |request: TossSchema |,
+				inputs: |request: entries::TossSchema |,
 				outputs: |result: JsonString|,
 				handler: handle_request_toss
 			}
             confirm_toss: {
-				inputs: |toss: TossSchema|,
+				inputs: |toss: entries::TossSchema|,
 				outputs: |result: JsonString|,
 				handler: handle_confirm_toss
 			}
@@ -437,7 +362,7 @@ define_zome! {
 				handler: handle_get_toss_history
 			}
             commit_seed: {
-                inputs: |seed: SeedSchema|,
+                inputs: |seed: entries::SeedSchema|,
                 outputs: |result: JsonString|,
                 handler: handle_commit_seed
             }            

@@ -31,7 +31,7 @@ test('Calls the set_handle() function, expects entry address as a result', (t) =
 
 test('Commit a seed and return the entry address', (t) => {
 
-  const seed_schema = { seed: 22 };
+  const seed_schema = { salt: "prdel", seed_value: 22 };
   const result = app.call("cointoss", "main", "commit_seed", { seed: seed_schema });
 
   console.log("commit_seed() result: ");
