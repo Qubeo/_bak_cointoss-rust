@@ -11,8 +11,8 @@ test.createStream()
   .pipe(process.stdout);
 
 // instantiate an app from the DNA JSON bundle
-const app_a = Container.loadAndInstantiate("dist/bundle.json");
-const app_b = Container.loadAndInstantiate("dist/bundle.json");
+const app_a = Container.instanceFromNameAndDna("jakub", "dist/bundle.json");
+const app_b = Container.instanceFromNameAndDna("bob", "dist/bundle.json");
 
 // activate the new instance
 app_a.start();
@@ -20,6 +20,11 @@ app_b.start();
 
 const handle_player_a = "prdelA";
 const handle_player_b = "prdelB";
+
+var handle_address_a;
+var handle_address_b;
+
+// Q: How to get the agent address?
 
 test('Get my address', (t) => {
 
@@ -29,7 +34,7 @@ test('Get my address', (t) => {
   console.log(result_a, result_b);
 
   //t.deepEqual(result_a, "QmeQPvoUwXXskAJtyBUNPX7ks8MoazmcSvKnvtYTVrBGNM")
-  t.end()
+  t.end();
 })
 
 test('Call the set_handle() function, expect entry address as a result', (t) => {
@@ -40,24 +45,39 @@ test('Call the set_handle() function, expect entry address as a result', (t) => 
   console.log("set_handle() result: ");
   console.log(result_a, result_b);
 
+  handle_address_a = result_a;
+  handle_address_b = result_b;
+
   // t.equal(result);
   t.end();
 })
 
-test('Initiate a toss by calling request_toss()'), (t) => {
+test('Initiate a toss by calling request_toss()', (t) => {
   
-  const result = app_a.call("cointoss", "main", "request_toss", {});
-  console.log(result);
+  console.log("Agent key: ")
+  console.log(handle_address_b);
+
+  
+
+  // TODO: Doesn't work. Q: How to (de)serialize the argument of the Address type??
+  // const result_request = app_a.call("cointoss", "main", "request_toss", agent_key: handle_address_b.address );
+  // const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: result_request });
+
+  console.log(result_request);
   t.end();
-}
+})
 
 test('Commit a seed and return the entry address', (t) => {
 
-  const seed_schema = { salt: "prdel", seed_value: 22 };
-  const result = app_a.call("cointoss", "main", "commit_seed", { seed: seed_schema });
+  // Q: Where should the "salt" be generated? How much freedom for the agent? Visibility?
+  const seed_schema_a = { salt: "prdel", seed_value: 22 };
+  // const seed_schema_b = { salt: "haf", seed_value: 32 };
+  const result_request = app_a.call("cointoss", "main", "commit_seed", { seed: seed_schema_a });
+
+
 
   console.log("commit_seed() result: ");
-  console.log(result);
+  console.log(result_request);
 
   t.end();
 })

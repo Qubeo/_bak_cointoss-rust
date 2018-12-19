@@ -162,15 +162,42 @@ pub fn handle_get_agent(_handle: HashString) -> JsonString {
 / Request the toss - initiating the game by doing the first seed commit and sending the request to the agent through gossip (?)
 */
 
-// TODO: This is wrong, I believe. The argument should be the agent (address? handle?), toss should be the output.
-pub fn handle_request_toss(_toss: TossSchema) -> JsonString {
+// TODO: This is wrong, I believe. The argument should be the agent (address? key? handle?), toss should be the output.
+pub fn handle_request_toss(_agent_key: Address) -> JsonString {
     
-    let seed = rand::thread_rng().gen_range(0, 10);
-    println!("Generated seed: {}", seed);
+    // TODO: Just a rough random salt and seed. Change to sth more secure.
+    let seed = SeedSchema {
+        salt: rand::thread_rng().gen_range(0, 10).to_string(),
+        seed_value: rand::thread_rng().gen_range(0, 10)
+    };
 
-    handle_commit_seed(SeedSchema { salt: "salt".to_string(), seed_value: seed });
+
+    hdk::debug("Generated seed: ");
+    hdk::debug(seed.seed_value.to_string());
+
+    let seed_entry = handle_commit_seed(seed);
+
+    // Q: Can I call gossip functions from here? If yes, how? Or should I do it from the outside of the container?
+    // TODO: Reconsider the design when I get the info. For now, passing the commited seed address to the JS.
     
-    return HashString::new().into();
+    /*
+    let toss = TossSchema {
+        initiator: &AGENT_ADDRESS,
+        initiator_seed_hash: seed_entry,
+        responder: _agent_key,
+        responder_seed_hash: 
+    };
+    */
+
+    return seed_entry.into();
+}
+
+pub fn handle_receive_request(_agent_key: Address, seed_hash: HashString) -> JsonString {
+
+    hdk::debug("handle_receive_request() agent_key:");
+    hdk::debug(_agent_key);
+
+    return seed_hash.into();
 }
 
 pub fn handle_get_toss_history() -> JsonString {
@@ -333,10 +360,15 @@ define_zome! {
 				handler: handle_get_agent
 			}
             request_toss: {
-				inputs: |request: entries::TossSchema |,
+				inputs: |agent_key: Address|,
 				outputs: |result: JsonString|,
 				handler: handle_request_toss
 			}
+            receive_request: {
+                inputs: |agent_key: Address, seed_hash: HashString|,    // TODO: He should probably read it automatically from the message sender. How? Gossip?
+                outputs: |result: JsonString|,
+                handler: handle_receive_request
+            }
             confirm_toss: {
 				inputs: |toss: entries::TossSchema|,
 				outputs: |result: JsonString|,
