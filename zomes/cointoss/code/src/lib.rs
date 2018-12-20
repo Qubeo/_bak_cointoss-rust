@@ -30,7 +30,7 @@ use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org
 };
 use hdk::api::AGENT_ADDRESS;
 mod entries;
-use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema};
+use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, AddrSchema};
 
 
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
@@ -42,7 +42,8 @@ pub fn handle_get_my_address() -> JsonString {
 
     // TODO: Not fully implemented AGENT_ADDRESS in the current HDK release yet.
     // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it? 
-    // TODO: VERY temporary - just returning a hard-coded HashString now.    
+    // TODO: VERY temporary - just returning a hard-coded HashString now.   
+
     return "prdel".into();
 }
 
@@ -55,11 +56,11 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     // What are the allowed forms for the argument? Can I see the memory / byte structure somewhere?    
     let raw_handle = JsonString::from(RawString::from(_handle.clone()));
 
-    // TODO: Napsat návrh na "formatted" hdk::debug! macro?
+    // TODO: Propose a "formatted" hdk::debug! macro PR?
     hdk::debug("handle_set_handle()::_handle: ");
     hdk::debug(raw_handle.clone());
    
-    let handle_entry = Entry::new(EntryType::App(CTEntryType::handle.to_string()), raw_handle); // Q: my_key? &my_key? Nebo "prdel"?
+    let handle_entry = Entry::new(EntryType::App(CTEntryType::handle.to_string()), raw_handle);
     hdk::debug(handle_entry.to_string());
     
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs. How to?
@@ -135,8 +136,6 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
 // returns all the handles in the directory
 pub fn handle_get_handles() -> JsonString {
 
-    // TODO: Just finding out what this does. Copied from the HoloChat to test it.
-    // It doesn't work here. How come it works in the HoloChat?? (Or does it?)
     return "prdelgethandle".into();
 }
 
@@ -151,9 +150,7 @@ pub fn handle_get_my_handle() -> JsonString {
 }
 
 // gets the AgentID (userAddress) based on handle
-pub fn handle_get_agent(_handle: HashString) -> JsonString {
-
-    
+pub fn handle_get_agent(_handle: HashString) -> JsonString {  
     return Address::new().into();
 }
 
@@ -161,19 +158,21 @@ pub fn handle_get_agent(_handle: HashString) -> JsonString {
 / pub fn handle_request_toss()
 / Request the toss - initiating the game by doing the first seed commit and sending the request to the agent through gossip (?)
 */
-
-// TODO: This is wrong, I believe. The argument should be the agent (address? key? handle?), toss should be the output.
 pub fn handle_request_toss(_agent_key: Address) -> JsonString {
-    
+        
+    // TODO: Body of this function throws "Unable to call zome function" in the HolochainJS for some reason.
     // TODO: Just a rough random salt and seed. Change to sth more secure.
+
+    // !!! TODO: This is the culprit block, causing the above mentioned error.
+    // Yes, the rand statements. Why? No idea. External crate linking?
+
     let seed = SeedSchema {
-        salt: rand::thread_rng().gen_range(0, 10).to_string(),
-        seed_value: rand::thread_rng().gen_range(0, 10)
-    };
+        salt: "del".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
+        seed_value: 2 // rand::thread_rng().gen_range(0, 10)
+     };
 
-
-    hdk::debug("Generated seed: ");
-    hdk::debug(seed.seed_value.to_string());
+    // hdk::debug("Generated seed: ");
+    // hdk::debug(seed.seed_value.to_string());
 
     let seed_entry = handle_commit_seed(seed);
 
@@ -188,16 +187,16 @@ pub fn handle_request_toss(_agent_key: Address) -> JsonString {
         responder_seed_hash: 
     };
     */
-
+    
     return seed_entry.into();
 }
 
-pub fn handle_receive_request(_agent_key: Address, seed_hash: HashString) -> JsonString {
+pub fn handle_receive_request(_agent_key: Address, _seed_hash: HashString) -> JsonString {
 
     hdk::debug("handle_receive_request() agent_key:");
     hdk::debug(_agent_key);
 
-    return seed_hash.into();
+    return _seed_hash.into();
 }
 
 pub fn handle_get_toss_history() -> JsonString {
@@ -345,7 +344,7 @@ define_zome! {
 				handler: handle_get_handles
 			}
             get_handle: {
-				inputs: |agentKey: HashString|,
+				inputs: |agent_key: HashString|,
 				outputs: |result: JsonString|,
 				handler: handle_get_handle
 			}
@@ -370,7 +369,7 @@ define_zome! {
                 handler: handle_receive_request
             }
             confirm_toss: {
-				inputs: |toss: entries::TossSchema|,
+				inputs: |toss: TossSchema|,
 				outputs: |result: JsonString|,
 				handler: handle_confirm_toss
 			}
@@ -380,7 +379,7 @@ define_zome! {
 				handler: handle_get_toss_history
 			}
             commit_seed: {
-                inputs: |seed: entries::SeedSchema|,
+                inputs: |seed: SeedSchema|,
                 outputs: |result: JsonString|,
                 handler: handle_commit_seed
             }            

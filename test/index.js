@@ -24,6 +24,8 @@ const handle_player_b = "prdelB";
 var handle_address_a;
 var handle_address_b;
 
+var g_seed_hash_a;
+
 // Q: How to get the agent address?
 
 test('Get my address', (t) => {
@@ -57,11 +59,7 @@ test('Initiate a toss by calling request_toss()', (t) => {
   console.log("Agent key: ")
   console.log(handle_address_b);
 
-  
-
-  // TODO: Doesn't work. Q: How to (de)serialize the argument of the Address type??
-  // const result_request = app_a.call("cointoss", "main", "request_toss", agent_key: handle_address_b.address );
-  // const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: result_request });
+  const result_request = app_b.call("cointoss", "main", "request_toss", { agent_key: handle_address_b.address });
 
   console.log(result_request);
   t.end();
@@ -71,13 +69,22 @@ test('Commit a seed and return the entry address', (t) => {
 
   // Q: Where should the "salt" be generated? How much freedom for the agent? Visibility?
   const seed_schema_a = { salt: "prdel", seed_value: 22 };
-  // const seed_schema_b = { salt: "haf", seed_value: 32 };
   const result_request = app_a.call("cointoss", "main", "commit_seed", { seed: seed_schema_a });
 
-
+  g_seed_hash_a = result_request;
 
   console.log("commit_seed() result: ");
-  console.log(result_request);
+  console.log(g_seed_hash_a);
+
+  t.end();
+})
+
+test('Receive the toss request', (t) => {
+
+  const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
+
+  console.log("receive_request() result: ");
+  console.log(result_receive);
 
   t.end();
 })

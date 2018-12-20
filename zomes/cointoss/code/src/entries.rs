@@ -61,6 +61,12 @@ pub struct SeedSchema {
     pub seed_value: u8
 }
 
+#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+pub struct AddrSchema {
+    pub key: String
+}
+
+
 
 //-----------------------------------------------------------------------------
 //                            Entry definitions
