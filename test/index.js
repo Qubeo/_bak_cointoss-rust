@@ -25,6 +25,7 @@ var handle_address_a;
 var handle_address_b;
 
 var g_seed_hash_a;
+var g_received_toss;
 
 // Q: How to get the agent address?
 
@@ -37,7 +38,7 @@ test('Get my address', (t) => {
 
   //t.deepEqual(result_a, "QmeQPvoUwXXskAJtyBUNPX7ks8MoazmcSvKnvtYTVrBGNM")
   t.end();
-})
+});
 
 test('Call the set_handle() function, expect entry address as a result', (t) => {
 
@@ -52,7 +53,7 @@ test('Call the set_handle() function, expect entry address as a result', (t) => 
 
   // t.equal(result);
   t.end();
-})
+});
 
 test('Initiate a toss by calling request_toss()', (t) => {
   
@@ -63,9 +64,9 @@ test('Initiate a toss by calling request_toss()', (t) => {
 
   console.log(result_request);
   t.end();
-})
+});
 
-test('Commit a seed and return the entry address', (t) => {
+test('Agent A/ Commit a seed and return the entry address', (t) => {
 
   // Q: Where should the "salt" be generated? How much freedom for the agent? Visibility?
   const seed_schema_a = { salt: "prdel", seed_value: 22 };
@@ -77,28 +78,34 @@ test('Commit a seed and return the entry address', (t) => {
   console.log(g_seed_hash_a);
 
   t.end();
-})
+});
 
-test('Receive the toss request', (t) => {
+test('Agent B/ Receive the toss request and commit the toss', (t) => {
 
   const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
+  g_received_toss = result_receive;
 
   console.log("JS/ receive_request() result: ");
   console.log(result_receive);
 
   t.end();
-})
+});
 
-test('Receive the toss request', (t) => {
+test('Agent A/ Receive the toss response, confirm the toss and commit it too', (t) => {
 
-  const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
+  const result_confirm = app_b.call("cointoss", "main", "confirm_toss", { toss: g_received_toss });
 
   console.log("JS/ receive_request() result: ");
-  console.log(result_receive);
+  console.log(result_confirm);
 
   t.end();
-})
+});
 
+test('Agent A/ reveals the result', (t) => {
+
+  // console.log("JS/ ... ");
+  t.end();
+});
 
 
 // Misc learning bits:

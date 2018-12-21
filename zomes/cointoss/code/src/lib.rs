@@ -46,7 +46,7 @@ pub fn handle_get_my_address() -> JsonString {
     // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it? 
     // TODO: VERY temporary - just returning a hard-coded HashString now.   
 
-    return "prdel".into();
+    return json!(AGENT_ADDRESS).into();
 }
 
 
@@ -210,12 +210,13 @@ pub fn handle_receive_request(_agent_key: Address, _seed_hash: HashString) -> Js
     hdk::debug("handle_receive_request() toss.responder_seed_hash: ");
     hdk::debug(toss.clone().responder_seed_hash);
         
-    let toss_entry = commit_toss(toss);
+    let toss_entry = commit_toss(toss.clone());
 
     hdk::debug("handle_receive_request() toss_entry:");
     hdk::debug(toss_entry.clone());
 
-    return toss_entry.into();
+    // return toss_entry.into();
+    return json!(toss).into();
 }
 
 pub fn handle_get_toss_history() -> JsonString {
@@ -230,23 +231,29 @@ pub fn handle_get_toss_history() -> JsonString {
 
 fn handle_confirm_toss(_toss: TossSchema) -> JsonString {
   
-    hdk::debug("_toss: ");
-    hdk::debug(_toss);
+    hdk::debug("handle_confirm_toss(): _toss: ");
+    hdk::debug(_toss.clone());
     
-  /*  let toss_entry = Entry::new(EntryType::App("toss".into()), _toss); // Q: my_key? &my_key? Nebo "prdel"?
+    // TODO: The toss confirmation code here. Do the values fit?
+  
+    let toss_entry = Entry::new(EntryType::App("toss".into()), _toss); // Q: my_key? &my_key? Nebo "prdel"?
     
-
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs.
     // TODO: Ask in Mattermost.
+
     let toss_address: JsonString = match hdk::commit_entry(&toss_entry) {
-         Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "toss") {
+         
+        // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "toss") {
             Ok(address) => json!({ "address": address }).into(),
             Err(hdk_err) => { hdk_err.into() }
-         },
-         Err(hdk_err) => hdk_err.into()
-    };*/
+        // },
+        // Err(hdk_err) => hdk_err.into()
+    };
     
-    return json!("prdel").into(); //toss_address.into();
+    hdk::debug("handle_confirm_toss(): toss_address: ");
+    hdk::debug(toss_address.clone());
+
+    return toss_address.into(); //toss_address.into();
 }
 
 
