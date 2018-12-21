@@ -32,7 +32,7 @@ test('Get my address', (t) => {
 
   const result_a = app_a.call("cointoss", "main", "get_my_address", {});  
   const result_b = app_b.call("cointoss", "main", "get_my_address", {});  
-  console.log("Address A, Address B: ");
+  console.log("JS/ Address A, Address B: ");
   console.log(result_a, result_b);
 
   //t.deepEqual(result_a, "QmeQPvoUwXXskAJtyBUNPX7ks8MoazmcSvKnvtYTVrBGNM")
@@ -44,7 +44,7 @@ test('Call the set_handle() function, expect entry address as a result', (t) => 
   const result_a = app_a.call("cointoss", "main", "set_handle", { handle: handle_player_a });
   const result_b = app_b.call("cointoss", "main", "set_handle", { handle: handle_player_b });
 
-  console.log("set_handle() result: ");
+  console.log("JS/ set_handle() result: ");
   console.log(result_a, result_b);
 
   handle_address_a = result_a;
@@ -56,7 +56,7 @@ test('Call the set_handle() function, expect entry address as a result', (t) => 
 
 test('Initiate a toss by calling request_toss()', (t) => {
   
-  console.log("Agent key: ")
+  console.log("JS/ Agent key: ")
   console.log(handle_address_b);
 
   const result_request = app_b.call("cointoss", "main", "request_toss", { agent_key: handle_address_b.address });
@@ -73,7 +73,7 @@ test('Commit a seed and return the entry address', (t) => {
 
   g_seed_hash_a = result_request;
 
-  console.log("commit_seed() result: ");
+  console.log("JS/ commit_seed() result: ");
   console.log(g_seed_hash_a);
 
   t.end();
@@ -83,11 +83,22 @@ test('Receive the toss request', (t) => {
 
   const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
 
-  console.log("receive_request() result: ");
+  console.log("JS/ receive_request() result: ");
   console.log(result_receive);
 
   t.end();
 })
+
+test('Receive the toss request', (t) => {
+
+  const result_receive = app_b.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
+
+  console.log("JS/ receive_request() result: ");
+  console.log(result_receive);
+
+  t.end();
+})
+
 
 
 // Misc learning bits:

@@ -28,10 +28,12 @@ use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org
     json::{ JsonString, RawString },
     cas::content::Address,
 };
-use hdk::api::AGENT_ADDRESS;
+// use hdk::api::AGENT_ADDRESS;
 mod entries;
 use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, AddrSchema};
 
+// TODO: Replace with the hdk implementation, when finished.
+static AGENT_ADDRESS: &str = "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh";
 
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
 // var me = App.Key.Hash ?? // Q: Where does this belong? And what type is it? HashString?
@@ -80,37 +82,39 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
 }
 
     /*
-     var handles = getLinks(App.Key.Hash, 'handle');
-  if (handles.length > 0)
-  {
-    if (anchorExists('handle', handle) === 'false') {
-      var oldKey = handles[0].Hash;
-      var key = update('handle', anchor('handle', handle), oldKey);
-      commit('handle_links', {
-        Links: [
-          {
-            Base: App.Key.Hash,
-            Link: oldKey,
-            Tag: 'handle',
-            LinkAction: HC.LinkAction.Del
-          },
-          { Base: App.Key.Hash, Link: key, Tag: 'handle' }
-        ]
-      });
+    var handles = getLinks(App.Key.Hash, 'handle');
+    if (handles.length > 0)
+    {
+        if (anchorExists('handle', handle) === 'false') {
+            var oldKey = handles[0].Hash;
+            var key = update('handle', anchor('handle', handle), oldKey);
+            commit('handle_links', {
+                Links: [
+                {
+                    Base: App.Key.Hash,
+                    Link: oldKey,
+                    Tag: 'handle',
+                    LinkAction: HC.LinkAction.Del
+                },
+                { Base: App.Key.Hash, Link: key, Tag: 'handle' }
+            ]
+    });
 
-      commit('directory_links', {
+    commit('directory_links', {
         Links: [
-          {
-            Base: App.DNA.Hash,
-            Link: oldKey,
-            Tag: 'handle',
-            LinkAction: HC.LinkAction.Del
-          },
-          { Base: App.DNA.Hash, Link: key, Tag: 'handle' }
+            {
+                Base: App.DNA.Hash,
+                Link: oldKey,
+                Tag: 'handle',
+                LinkAction: HC.LinkAction.Del
+            },
+            { Base: App.DNA.Hash, Link: key, Tag: 'handle' }
         ]
-      });
-      return key;
+        });
+    
+    return key;
     }
+    
     else {
       // debug('HandleInUse')
       return 'HandleInUse';
@@ -135,7 +139,6 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
 
 // returns all the handles in the directory
 pub fn handle_get_handles() -> JsonString {
-
     return "prdelgethandle".into();
 }
 
@@ -145,8 +148,8 @@ pub fn handle_get_handle(_handle: HashString) -> JsonString {
     return HashString::new().into();
 }
 
-pub fn handle_get_my_handle() -> JsonString { 
-    return HashString::new().into();
+pub fn handle_get_my_handle() -> JsonString {         
+    return "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh".into();
 }
 
 // gets the AgentID (userAddress) based on handle
@@ -161,11 +164,9 @@ pub fn handle_get_agent(_handle: HashString) -> JsonString {
 pub fn handle_request_toss(_agent_key: Address) -> JsonString {
         
     // TODO: Body of this function throws "Unable to call zome function" in the HolochainJS for some reason.
-    // TODO: Just a rough random salt and seed. Change to sth more secure.
-
     // !!! TODO: This is the culprit block, causing the above mentioned error.
-    // Yes, the rand statements. Why? No idea. External crate linking?
-
+    // Yes, the rand statements. Why? No idea. External crate linking? Or some kind of buffer / array error?
+    // TODO: Just a rough random salt and seed. Change to sth more secure.
     let seed = SeedSchema {
         salt: "del".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
         seed_value: 2 // rand::thread_rng().gen_range(0, 10)
@@ -178,25 +179,43 @@ pub fn handle_request_toss(_agent_key: Address) -> JsonString {
 
     // Q: Can I call gossip functions from here? If yes, how? Or should I do it from the outside of the container?
     // TODO: Reconsider the design when I get the info. For now, passing the commited seed address to the JS.
-    
-    /*
-    let toss = TossSchema {
-        initiator: &AGENT_ADDRESS,
-        initiator_seed_hash: seed_entry,
-        responder: _agent_key,
-        responder_seed_hash: 
-    };
-    */
-    
+     
     return seed_entry.into();
 }
 
 pub fn handle_receive_request(_agent_key: Address, _seed_hash: HashString) -> JsonString {
 
-    hdk::debug("handle_receive_request() agent_key:");
-    hdk::debug(_agent_key);
+    let my_seed = SeedSchema {
+        salt: "pr".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
+        seed_value: 5 // rand::thread_rng().gen_range(0, 10)
+     };
+    
+    let seed_entry = handle_commit_seed(my_seed);
+    let seed_address = seed_entry.to_string();
 
-    return _seed_hash.into();
+    // TODO: Either deserialize an "Address" wrapper struct, or create a macro? Or use a slicing hack?
+    // Q: Best choice from the development best practices perspective?
+
+    hdk::debug("handle_receive_request() seed_address:");
+    hdk::debug(seed_address.clone());
+
+    let toss = TossSchema {
+        initiator:  _agent_key.clone(),
+        initiator_seed_hash: _seed_hash.clone(),
+        responder: HashString::from(AGENT_ADDRESS), // TODO: get_my_address or AGENT_ADDRESS.clone()
+        responder_seed_hash: HashString::from(&seed_address[12..58]), // TODO: What a dirty trick. BUG?: Shoots down zome function call when e.g. [14..3]. Should?
+        call: true
+    };
+
+    hdk::debug("handle_receive_request() toss.responder_seed_hash: ");
+    hdk::debug(toss.clone().responder_seed_hash);
+        
+    let toss_entry = commit_toss(toss);
+
+    hdk::debug("handle_receive_request() toss_entry:");
+    hdk::debug(toss_entry.clone());
+
+    return toss_entry.into();
 }
 
 pub fn handle_get_toss_history() -> JsonString {
@@ -204,19 +223,12 @@ pub fn handle_get_toss_history() -> JsonString {
         let prdel = "prdel".to_string();
         let prdel_hash = HashString::encode_from_str(&prdel.clone(), Hash::SHA2256);
 
-        let toss = TossSchema {
-            initiator:  prdel_hash.clone(),
-            initiator_seed_hash: prdel_hash.clone(),
-            responder: prdel_hash.clone(),
-            responder_seed_hash: prdel_hash.clone(),
-            call: true
-        };
+
         
         return json!(prdel_hash).into();
 }
 
 fn handle_confirm_toss(_toss: TossSchema) -> JsonString {
-// fn handle_confirm_toss(_toss: JsonString) -> JsonString {
   
     hdk::debug("_toss: ");
     hdk::debug(_toss);
@@ -268,15 +280,30 @@ fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
         // Err(hdk_err) => hdk_err.into()
     };
 
-    return seed_address.into();
+    return seed_address;
 }
 
 fn confirm_seed() -> JsonString {
     return HashString::new().into();
 }
 
-fn commit_toss(_toss: TossSchema) -> JsonString {   
-    return HashString::new().into();
+fn commit_toss(_toss: TossSchema) -> JsonString {
+
+    let toss_entry = Entry::new(EntryType::App(CTEntryType::toss.to_string()), _toss);
+
+    let toss_address: JsonString = match hdk::commit_entry(&toss_entry) {
+
+        // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "tosses") {
+            Ok(address) => json!({ "address": address }).into(),
+            Err(hdk_err) => { hdk_err.into() }
+        // },
+        // Err(hdk_err) => hdk_err.into()
+    };
+
+    hdk::debug("commit_toss(): toss_entry: ");
+    hdk::debug(toss_address.to_string());
+
+    return toss_address.into();
 }
 
 fn generate_salt() -> JsonString {

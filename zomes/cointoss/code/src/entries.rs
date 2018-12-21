@@ -37,7 +37,7 @@ impl fmt::Display for CTEntryType {
 }
 
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct TossSchema {
     pub initiator: Address,
     pub initiator_seed_hash: HashString,
