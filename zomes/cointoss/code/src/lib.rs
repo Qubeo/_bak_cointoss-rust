@@ -49,7 +49,14 @@ pub fn handle_get_my_address() -> JsonString {
     return json!(AGENT_ADDRESS).into();
 }
 
-
+/*
+ * Returns the list of Ratings of a particular Ratee.
+ *
+ * @callingType {json}
+ * @exposure {public}
+ * @param {json} { "Ratee": "<agenthash>" }
+ * @return {json}[] {"Result": true, "Entries": ["Rater": "<hash>", "Rating": "<string>"]}
+ */
 pub fn handle_set_handle(_handle: String) -> JsonString {
    
     // let handle_hash = HashString::encode_from_str(&_handle, Hash::SHA2256);
@@ -78,62 +85,9 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     // let my_key_entry_address = match hdk::get_entry(hdk::entry_address(&my_key_entry)) {
     hdk::debug(handle_address.clone());
 
-    return handle_address;     
-}
+    return handle_address;
 
-    /*
-    var handles = getLinks(App.Key.Hash, 'handle');
-    if (handles.length > 0)
-    {
-        if (anchorExists('handle', handle) === 'false') {
-            var oldKey = handles[0].Hash;
-            var key = update('handle', anchor('handle', handle), oldKey);
-            commit('handle_links', {
-                Links: [
-                {
-                    Base: App.Key.Hash,
-                    Link: oldKey,
-                    Tag: 'handle',
-                    LinkAction: HC.LinkAction.Del
-                },
-                { Base: App.Key.Hash, Link: key, Tag: 'handle' }
-            ]
-    });
 
-    commit('directory_links', {
-        Links: [
-            {
-                Base: App.DNA.Hash,
-                Link: oldKey,
-                Tag: 'handle',
-                LinkAction: HC.LinkAction.Del
-            },
-            { Base: App.DNA.Hash, Link: key, Tag: 'handle' }
-        ]
-        });
-    
-    return key;
-    }
-    
-    else {
-      // debug('HandleInUse')
-      return 'HandleInUse';
-    }
-  }
-
-  if (anchorExists('handle', handle) === 'false') {
-    var newHandleKey = commit('handle', anchor('handle', handle));
-    commit('handle_links', {
-      Links: [{ Base: App.Key.Hash, Link: newHandleKey, Tag: 'handle' }]
-    });
-    commit('directory_links', {
-      Links: [{ Base: App.DNA.Hash, Link: newHandleKey, Tag: 'directory' }]
-    });
-    return newHandleKey;
-  } else {
-    // debug('HandleInUse')
-    return 'HandleInUse';
-  } */
 
 
 
