@@ -19,7 +19,7 @@ use rand::Rng;
 use multihash::{encode, decode, Hash};
 use std::fmt;
 // use snowflake;
-use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org/api/0.0.2/hdk/
+/* use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org/api/0.0.2/hdk/
     hash::HashString,
     error::HolochainError,
     entry::Entry,
@@ -27,7 +27,20 @@ use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org
     entry::entry_type::EntryType,
     json::{ JsonString, RawString },
     cas::content::Address,
+}; */
+
+use hdk::{
+    // self,
+    error::ZomeApiResult,
+    holochain_core_types::{
+        cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError, json::{ JsonString, RawString }, hash::HashString 
+    },
+    holochain_wasm_utils::api_serialization::{
+        get_entry::GetEntryOptions, get_links::GetLinksResult,
+    },
+    // AGENT_ADDRESS,
 };
+
 // use hdk::api::AGENT_ADDRESS;
 mod entries;
 use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, AddrSchema};
@@ -69,11 +82,15 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     hdk::debug("handle_set_handle()::_handle: ");
     hdk::debug(raw_handle.clone());
    
-    let handle_entry = Entry::new(EntryType::App(CTEntryType::handle.to_string()), raw_handle);
-    hdk::debug(handle_entry.to_string());
+    // let post_entry = Entry::App("post".into(), Post::new(&content, "now").into());
+
+    // let handle_entry = Entry::App(CTEntryType::handle.to_string(), raw_handle);
+   // let handle_entry = Entry::App("handle".into(), raw_handle.into());
+
+    // hdk::debug(handle_entry.to_string());
     
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs. How to?
-    let handle_address: JsonString = match hdk::commit_entry(&handle_entry) {
+    /* let handle_address: JsonString = match hdk::commit_entry(&handle_entry) {
 
         // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "handle") {
             Ok(address) => json!({ "address": address }).into(),
@@ -83,9 +100,9 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     };
     
     // let my_key_entry_address = match hdk::get_entry(hdk::entry_address(&my_key_entry)) {
-    hdk::debug(handle_address.clone());
+    hdk::debug(handle_address.clone()); */
 
-    return handle_address;
+    return "aa".into(); //handle_address;
 }
 
 
@@ -183,14 +200,14 @@ pub fn handle_get_toss_history() -> JsonString {
         return json!(prdel_hash).into();
 }
 
-fn handle_confirm_toss(_toss: TossSchema) -> JsonString {
+fn handle_confirm_toss(toss: TossSchema) -> JsonString {
   
     hdk::debug("handle_confirm_toss(): _toss: ");
-    hdk::debug(_toss.clone());
+    hdk::debug(toss.clone());
     
     // TODO: The toss confirmation code here. Do the values fit?
   
-    let toss_entry = Entry::new(EntryType::App("toss".into()), _toss); // Q: my_key? &my_key? Nebo "prdel"?
+    let toss_entry = Entry::App("toss".into(), toss.into()); // Q: my_key? &my_key? Nebo "prdel"?
     
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs.
     // TODO: Ask in Mattermost.
@@ -229,8 +246,9 @@ fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
     //hdk::debug("Raw seed: ");
     //hdk::debug(entry_arg.clone());
 
-    let seed_entry = Entry::new(EntryType::App(CTEntryType::seed.to_string()), _seed);
-    hdk::debug(seed_entry.to_string());
+    // let seed_entry = Entry::new(EntryType::App(CTEntryType::seed.to_string()), _seed);
+    let seed_entry = Entry::App("seed".into(), _seed.into());
+    // hdk::debug(seed_entry.to_string());
     
     let seed_address: JsonString = match hdk::commit_entry(&seed_entry) {
 
@@ -248,9 +266,9 @@ fn confirm_seed() -> JsonString {
     return HashString::new().into();
 }
 
-fn commit_toss(_toss: TossSchema) -> JsonString {
+fn commit_toss(toss: TossSchema) -> JsonString {
 
-    let toss_entry = Entry::new(EntryType::App(CTEntryType::toss.to_string()), _toss);
+    let toss_entry = Entry::App("toss".into(), toss.into());
 
     let toss_address: JsonString = match hdk::commit_entry(&toss_entry) {
 

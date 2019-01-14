@@ -1,4 +1,4 @@
-use hdk::{
+/*use hdk::{
     self,
     entry_definition::{
         ValidatingEntryType,
@@ -7,14 +7,31 @@ use hdk::{
     error::{ ZomeApiError, ZomeApiResult },
     holochain_core_types::{
         cas::content::Address,
-        dna::zome::entry_types::Sharing,
+        dna::entry_types::Sharing,
         entry::{ entry_type::EntryType, Entry },
         error::HolochainError,
         json::JsonString,
         hash::HashString
     },
     AGENT_ADDRESS,
+}; */
+
+use hdk::{
+    self,
+    entry_definition::{
+        ValidatingEntryType,
+        ValidatingLinkDefinition,
+    },
+    error::ZomeApiResult,
+    holochain_core_types::{
+        cas::content::Address, entry::Entry, dna::entry_types::Sharing, error::HolochainError, json::JsonString, hash::HashString
+    },
+    holochain_wasm_utils::api_serialization::{
+        get_entry::GetEntryOptions, get_links::GetLinksResult,
+    },
+    AGENT_ADDRESS,
 };
+
 use std::convert::TryFrom;
 use std::fmt;
 
@@ -82,7 +99,7 @@ pub fn handle_definition() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |_handle: String, _ctx: hdk::ValidationData| { Ok(()) }
+        validation: |handle: String, _ctx: hdk::ValidationData| { Ok(()) }
     )
 }
 
