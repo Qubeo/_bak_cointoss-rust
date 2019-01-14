@@ -86,7 +86,7 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     hdk::debug(handle_address.clone());
 
     return handle_address;
-
+}
 
 
 
@@ -313,6 +313,11 @@ define_zome! {
                 Ok(())
             }
          }
+    
+    receive: |payload| {
+        // simply pass back the received value, appended to a modifier
+        format!("Received: {}", payload)
+     }
 
     functions: {
         main (Public) {
