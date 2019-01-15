@@ -28,7 +28,7 @@ use hdk::{
     holochain_wasm_utils::api_serialization::{
         get_entry::GetEntryOptions, get_links::GetLinksResult,
     },
-    api::AGENT_ID_STR,
+    api::AGENT_ID_STR, AGENT_ADDRESS
 };
 
 // use hdk::api::AGENT_ADDRESS;
@@ -36,7 +36,7 @@ mod entries;
 use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, AddrSchema};
 
 // TODO: Replace with the hdk implementation, when finished.
-static AGENT_ADDRESS: &str = "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh";
+// static AGENT_ADDRESS: &str = "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh";
 
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
 // var me = App.Key.Hash ?? // Q: Where does this belong? And what type is it? HashString?
@@ -49,7 +49,8 @@ pub fn handle_get_my_address() -> ZomeApiResult<JsonString> {
     // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it? 
     // TODO: VERY temporary - just returning a hard-coded HashString now.   
 
-    Ok(AGENT_ID_STR.clone().into())
+    Ok(JsonString::from(Address::from(AGENT_ADDRESS.to_string())))
+    // Ok(AGENT_ADDRESS.clone().into());    // Q: Difference from the above?
     //return json!(AGENT_ADDRESS).into();
 }
 
@@ -61,23 +62,28 @@ pub fn handle_get_my_address() -> ZomeApiResult<JsonString> {
  * @param {json} { "Ratee": "<agenthash>" }
  * @return {json}[] {"Result": true, "Entries": ["Rater": "<hash>", "Rating": "<string>"]}
  */
-pub fn handle_set_handle(_handle: String) -> ZomeApiResult<JsonString> {
+pub fn handle_set_handle(handle_string: String) -> ZomeApiResult<JsonString> {
    
     // let handle_hash = HashString::encode_from_str(&_handle, Hash::SHA2256);
 
     // Q: It works with the JsonString(RawString) wrapping. How come?
     // What are the allowed forms for the argument? Can I see the memory / byte structure somewhere?    
-    let raw_handle = JsonString::from(RawString::from(_handle.clone()));
+    // let raw_handle = JsonString::from(RawString::from(_handle.clone()));
 
     // TODO: Propose a "formatted" hdk::debug! macro PR?
     hdk::debug("handle_set_handle()::_handle: ");
-    hdk::debug(raw_handle.clone());
+    // hdk::debug(raw_handle.clone());
    
     // let post_entry = Entry::App("post".into(), Post::new(&content, "now").into());
+    let handle = entries::HandleSchema { handle: handle_string };
+
+    let handle_entry = Entry::App("handle".into(), handle.clone().into());
     // hdk::debug(handle_entry.to_string());
     
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs. How to?
-    /* let handle_address: JsonString = match hdk::commit_entry(&handle_entry) {
+    // let handle_address = hdk::commit_entry(&handle_entry);
+    
+    let handle_address: JsonString = match hdk::commit_entry(&handle_entry) {
 
         // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "handle") {
             Ok(address) => json!({ "address": address }).into(),
@@ -87,9 +93,10 @@ pub fn handle_set_handle(_handle: String) -> ZomeApiResult<JsonString> {
     };
     
     // let my_key_entry_address = match hdk::get_entry(hdk::entry_address(&my_key_entry)) {
-    hdk::debug(handle_address.clone()); */
+    hdk::debug(handle_address.clone());
 
-    Ok(raw_handle.clone().into()) //handle_address;
+    Ok(handle_address)
+    // Ok(raw_handle.clone().into()) //handle_address;
 }
 
 // returns all the handles in the directory
@@ -156,7 +163,7 @@ pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> Zome
     let toss = TossSchema {
         initiator: agent_key.clone(),
         initiator_seed_hash: seed_hash.clone(),
-        responder: HashString::from(AGENT_ADDRESS), // TODO: get_my_address or AGENT_ADDRESS.clone()
+        responder: Address::from(AGENT_ADDRESS.to_string()), // Q: Why can't just use the AGENT_ADDRESS?
         responder_seed_hash: HashString::from(&seed_address[12..58]), // TODO: What a dirty trick. BUG?: Shoots down zome function call when e.g. [14..3]. Should?
         call: true
     };

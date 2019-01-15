@@ -64,6 +64,11 @@ pub struct TossSchema {
     // pub required: ["initiator", "initiator_seed_hash", "responder", "responder_seed_hash"]; // Q: How to initialize the field?
 }
 
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct HandleSchema {
+    pub handle: String
+}
+
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct TossResultSchema {
     pub toss: TossSchema,       
@@ -97,11 +102,11 @@ pub fn handle_definition() -> ValidatingEntryType {
         name: "handle",
         description: "",
         sharing: Sharing::Public,
-        native_type: Address,                                // Q: Why does String, or even JsonString not work any more?
+        native_type: HandleSchema,                                // Q: Why does String, or even JsonString not work any more?
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |_handle: Address, _ctx: hdk::ValidationData| { Ok(()) }
+        validation: |handle: HandleSchema, ctx: hdk::ValidationData| { Ok(()) }
     )
 } 
 
@@ -114,7 +119,7 @@ pub fn seed_definition() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |_seed: SeedSchema, _ctx: hdk::ValidationData| { Ok(()) },
+        validation: |seed: SeedSchema, ctx: hdk::ValidationData| { Ok(()) },
         links: [
             from!(
                 "%agent_id",
@@ -122,7 +127,7 @@ pub fn seed_definition() -> ValidatingEntryType {
                 validation_package: || {
                     hdk::ValidationPackageDefinition::ChainFull
                 },
-                validation: |_source: Address, _target: Address, _ctx: hdk::ValidationData| {
+                validation: |source: Address, _target: Address, ctx: hdk::ValidationData| {
                     Ok(())
                 })
             ]
@@ -138,7 +143,7 @@ pub fn toss_definition() -> ValidatingEntryType {
         validation_package: || { 
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |_toss: TossSchema, _ctx: hdk::ValidationData| { Ok(()) }
+        validation: |toss: TossSchema, ctx: hdk::ValidationData| { Ok(()) }
     )
 }
 
@@ -151,6 +156,6 @@ pub fn toss_result_definition() -> ValidatingEntryType {
         validation_package: || { 
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |_toss_result: TossResultSchema, _ctx: hdk::ValidationData| { Ok(()) }
+        validation: |toss_result: TossResultSchema, ctx: hdk::ValidationData| { Ok(()) }
     )
 }

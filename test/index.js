@@ -61,8 +61,8 @@ test('Call the set_handle() function, expect entry address as a result', (t) => 
   console.log("JS/ set_handle() result: ");
   console.log(result_a, result_b);
 
-  handle_address_a = result_a;
-  handle_address_b = result_b;
+  handle_address_a = result_a.Ok;
+  handle_address_b = result_b.Ok;
 
   // t.equal(result);
   t.end();
@@ -85,7 +85,7 @@ test('Agent A/ Commit a seed and return the entry address', (t) => {
   const seed_schema_a = { salt: "prdel", seed_value: 22 };
   const result_request = player_A.call("cointoss", "main", "commit_seed", { seed: seed_schema_a });
 
-  g_seed_hash_a = result_request;
+  g_seed_hash_a = result_request.Ok;
 
   console.log("JS/ commit_seed() result: ");
   console.log(g_seed_hash_a);
@@ -96,7 +96,7 @@ test('Agent A/ Commit a seed and return the entry address', (t) => {
 test('Agent B/ Receive the toss request and commit the toss', (t) => {
 
   const result_receive = player_B.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
-  g_received_toss = result_receive;
+  g_received_toss = result_receive.Ok;
 
   console.log("JS/ receive_request() result: ");
   console.log(result_receive);
