@@ -154,7 +154,7 @@ pub fn handle_request_toss(_agent_key: Address) -> JsonString {
     return seed_entry.into();
 }
 
-pub fn handle_receive_request(_agent_key: Address, _seed_hash: HashString) -> JsonString {
+pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> JsonString {
 
     let my_seed = SeedSchema {
         salt: "pr".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
@@ -171,8 +171,8 @@ pub fn handle_receive_request(_agent_key: Address, _seed_hash: HashString) -> Js
     hdk::debug(seed_address.clone());
 
     let toss = TossSchema {
-        initiator:  _agent_key.clone(),
-        initiator_seed_hash: _seed_hash.clone(),
+        initiator: agent_key.clone(),
+        initiator_seed_hash: seed_hash.clone(),
         responder: HashString::from(AGENT_ADDRESS), // TODO: get_my_address or AGENT_ADDRESS.clone()
         responder_seed_hash: HashString::from(&seed_address[12..58]), // TODO: What a dirty trick. BUG?: Shoots down zome function call when e.g. [14..3]. Should?
         call: true
@@ -293,7 +293,7 @@ fn generate_salt() -> JsonString {
 define_zome! {
     entries: [
 
-        entries::handle_definition(),
+        // entries::handle_definition(),
         entries::toss_definition(),
         entries::toss_result_definition(),
         entries::seed_definition()
