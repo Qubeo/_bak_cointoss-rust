@@ -281,14 +281,14 @@ fn generate_salt() -> ZomeApiResult<JsonString> {
 define_zome! {
     entries: [
 
-        // entries::handle_definition(),
+        entries::handle_definition(),
         entries::toss_definition(),
         entries::toss_result_definition(),
         entries::seed_definition()
 
         // TODO: Q: It seems I can define multiple entries of the same type / content. Isn't this a bug?
 
-       /* Q: Link entries. What to do with those?
+       /* Q: Link entries. What to do with those?npm 
         entry!(
             name: "handle_links",
             native_type:
@@ -329,8 +329,8 @@ define_zome! {
         main (Public) {
 			get_my_address: {
 				inputs: | |,
-				outputs: |result: ZomeApiResult<JsonString>|,      // Q: Not sure about the return type. HashString? Or everything here JsonString?
-				handler: handle_get_my_address            // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
+				outputs: |result: ZomeApiResult<JsonString>|,       // Q: Not sure about the return type. HashString? Or everything here JsonString?
+				handler: handle_get_my_address                      // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
 			}
     		set_handle: {
 				inputs: |handle: String|,
