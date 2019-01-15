@@ -44,7 +44,7 @@ var g_received_toss;
 
 test('Get my address', (t) => {
 
-  const result_a = player_A.call("cointoss", "main", "get_my_address", {});  
+  const result_a = player_A.call("cointoss", "main", "get_my_address", {});
   const result_b = player_B.call("cointoss", "main", "get_my_address", {});  
   console.log("JS/ Address A, Address B: ");
   console.log(result_a, result_b);

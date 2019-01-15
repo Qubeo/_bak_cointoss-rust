@@ -91,20 +91,18 @@ pub struct AddrSchema {
 
 
 pub fn handle_definition() -> ValidatingEntryType {
-    
-    
+        
     // Entry: "handle" for __________? The player? 
     entry!(
         name: "handle",
         description: "",
         sharing: Sharing::Public,
-        native_type: JsonString,                                // Q: Why does String not work any more?
+        native_type: Address,                                // Q: Why does String, or even JsonString not work any more?
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |_handle: JsonString, _ctx: hdk::ValidationData| { Ok(()) }
+        validation: |_handle: Address, _ctx: hdk::ValidationData| { Ok(()) }
     )
-    
 } 
 
 pub fn seed_definition() -> ValidatingEntryType {

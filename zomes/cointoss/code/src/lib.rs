@@ -19,16 +19,6 @@ use rand::Rng;
 use multihash::{encode, decode, Hash};
 use std::fmt;
 // use snowflake;
-/* use hdk::holochain_core_types::{ // HDK library: https://developer.holochain.org/api/0.0.2/hdk/
-    hash::HashString,
-    error::HolochainError,
-    entry::Entry,
-    dna::zome::entry_types::Sharing,
-    entry::entry_type::EntryType,
-    json::{ JsonString, RawString },
-    cas::content::Address,
-}; */
-
 use hdk::{
     // self,
     error::ZomeApiResult,
@@ -38,7 +28,7 @@ use hdk::{
     holochain_wasm_utils::api_serialization::{
         get_entry::GetEntryOptions, get_links::GetLinksResult,
     },
-    // AGENT_ADDRESS,
+    api::AGENT_ID_STR,
 };
 
 // use hdk::api::AGENT_ADDRESS;
@@ -51,7 +41,7 @@ static AGENT_ADDRESS: &str = "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh";
 // -------------------------------------- TOSS FUNCTIONS ------------------------------------------
 // var me = App.Key.Hash ?? // Q: Where does this belong? And what type is it? HashString?
 
-pub fn handle_get_my_address() -> JsonString {
+pub fn handle_get_my_address() -> ZomeApiResult<JsonString> {
   
     // AGENT_ADDRESS.clone().into();
 
@@ -59,7 +49,8 @@ pub fn handle_get_my_address() -> JsonString {
     // Temporary workaround idea: use a random hash? Or hash agent key? Where do I get it? 
     // TODO: VERY temporary - just returning a hard-coded HashString now.   
 
-    return json!(AGENT_ADDRESS).into();
+    Ok(AGENT_ID_STR.clone().into())
+    //return json!(AGENT_ADDRESS).into();
 }
 
 /*
@@ -70,7 +61,7 @@ pub fn handle_get_my_address() -> JsonString {
  * @param {json} { "Ratee": "<agenthash>" }
  * @return {json}[] {"Result": true, "Entries": ["Rater": "<hash>", "Rating": "<string>"]}
  */
-pub fn handle_set_handle(_handle: String) -> JsonString {
+pub fn handle_set_handle(_handle: String) -> ZomeApiResult<JsonString> {
    
     // let handle_hash = HashString::encode_from_str(&_handle, Hash::SHA2256);
 
@@ -83,10 +74,6 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     hdk::debug(raw_handle.clone());
    
     // let post_entry = Entry::App("post".into(), Post::new(&content, "now").into());
-
-    // let handle_entry = Entry::App(CTEntryType::handle.to_string(), raw_handle);
-   // let handle_entry = Entry::App("handle".into(), raw_handle.into());
-
     // hdk::debug(handle_entry.to_string());
     
     // Q: It seems having this in genesis doesn't work - throws an exception within the holochain-nodejs. How to?
@@ -102,37 +89,33 @@ pub fn handle_set_handle(_handle: String) -> JsonString {
     // let my_key_entry_address = match hdk::get_entry(hdk::entry_address(&my_key_entry)) {
     hdk::debug(handle_address.clone()); */
 
-    return "aa".into(); //handle_address;
+    Ok(raw_handle.clone().into()) //handle_address;
 }
-
-
-
 
 // returns all the handles in the directory
-pub fn handle_get_handles() -> JsonString {
-    return "prdelgethandle".into();
+pub fn handle_get_handles() -> ZomeApiResult<JsonString> {
+    Ok("prdelgethandle".into())
 }
-
 
 // returns the handle of an agent by looking it up on the user's DHT entry, the last handle will be the current one?
-pub fn handle_get_handle(_handle: HashString) -> JsonString {
-    return HashString::new().into();
+pub fn handle_get_handle(_handle: HashString) -> ZomeApiResult<JsonString> {
+    Ok(HashString::new().into())
 }
 
-pub fn handle_get_my_handle() -> JsonString {         
-    return "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh".into();
+pub fn handle_get_my_handle() -> ZomeApiResult<JsonString> {         
+    Ok("QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh".into())
 }
 
 // gets the AgentID (userAddress) based on handle
-pub fn handle_get_agent(_handle: HashString) -> JsonString {  
-    return Address::new().into();
+pub fn handle_get_agent(_handle: HashString) -> ZomeApiResult<JsonString> {  
+    Ok(Address::new().into())
 }
 
 /*
 / pub fn handle_request_toss()
 / Request the toss - initiating the game by doing the first seed commit and sending the request to the agent through gossip (?)
 */
-pub fn handle_request_toss(_agent_key: Address) -> JsonString {
+pub fn handle_request_toss(_agent_key: Address) -> ZomeApiResult<JsonString> {
         
     // TODO: Body of this function throws "Unable to call zome function" in the HolochainJS for some reason.
     // !!! TODO: This is the culprit block, causing the above mentioned error.
@@ -151,10 +134,10 @@ pub fn handle_request_toss(_agent_key: Address) -> JsonString {
     // Q: Can I call gossip functions from here? If yes, how? Or should I do it from the outside of the container?
     // TODO: Reconsider the design when I get the info. For now, passing the commited seed address to the JS.
      
-    return seed_entry.into();
+    Ok(seed_entry.into())
 }
 
-pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> JsonString {
+pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> ZomeApiResult<JsonString> {
 
     let my_seed = SeedSchema {
         salt: "pr".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
@@ -162,7 +145,7 @@ pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> Json
      };
     
     let seed_entry = handle_commit_seed(my_seed);
-    let seed_address = seed_entry.to_string();
+    let seed_address = seed_entry.unwrap().to_string();
 
     // TODO: Either deserialize an "Address" wrapper struct, or create a macro? Or use a slicing hack?
     // Q: Best choice from the development best practices perspective?
@@ -184,23 +167,21 @@ pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> Json
     let toss_entry = commit_toss(toss.clone());
 
     hdk::debug("handle_receive_request() toss_entry:");
-    hdk::debug(toss_entry.clone());
+    hdk::debug(toss_entry.unwrap().clone());
 
     // return toss_entry.into();
-    return json!(toss).into();
+    Ok(json!(toss).into())
 }
 
-pub fn handle_get_toss_history() -> JsonString {
+pub fn handle_get_toss_history() -> ZomeApiResult<JsonString> {
         
         let prdel = "prdel".to_string();
         let prdel_hash = HashString::encode_from_str(&prdel.clone(), Hash::SHA2256);
-
-
         
-        return json!(prdel_hash).into();
+        Ok(json!(prdel_hash).into())
 }
 
-fn handle_confirm_toss(toss: TossSchema) -> JsonString {
+fn handle_confirm_toss(toss: TossSchema) -> ZomeApiResult<JsonString> {
   
     hdk::debug("handle_confirm_toss(): _toss: ");
     hdk::debug(toss.clone());
@@ -224,17 +205,16 @@ fn handle_confirm_toss(toss: TossSchema) -> JsonString {
     hdk::debug("handle_confirm_toss(): toss_address: ");
     hdk::debug(toss_address.clone());
 
-    return toss_address.into(); //toss_address.into();
+    Ok(toss_address.into()) //toss_address.into();
 }
 
 
 // Commit functions - should they be a part of the zome? Or private? Or both?
-
 /*
 / fn commit_seed()
 / return: ???
 */
-fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
+fn handle_commit_seed(_seed: SeedSchema) -> ZomeApiResult<JsonString> {
 
     // Validate if 9 <= seed >= 0 
     // Generate salt
@@ -259,14 +239,14 @@ fn handle_commit_seed(_seed: SeedSchema) -> JsonString {
         // Err(hdk_err) => hdk_err.into()
     };
 
-    return seed_address;
+    Ok(seed_address)
 }
 
-fn confirm_seed() -> JsonString {
-    return HashString::new().into();
+fn confirm_seed() -> ZomeApiResult<JsonString> {
+    Ok(HashString::new().into())
 }
 
-fn commit_toss(toss: TossSchema) -> JsonString {
+fn commit_toss(toss: TossSchema) -> ZomeApiResult<JsonString> {
 
     let toss_entry = Entry::App("toss".into(), toss.into());
 
@@ -282,14 +262,15 @@ fn commit_toss(toss: TossSchema) -> JsonString {
     hdk::debug("commit_toss(): toss_entry: ");
     hdk::debug(toss_address.to_string());
 
-    return toss_address.into();
+    Ok(toss_address.into())
 }
 
-fn generate_salt() -> JsonString {
-    return HashString::new().into();
+fn generate_salt() -> ZomeApiResult<JsonString> {
+    Ok(HashString::new().into())
 }
 
 
+// ZOME DEFINITION --------------------------------------------------------------------------------
 define_zome! {
     entries: [
 
@@ -341,57 +322,57 @@ define_zome! {
         main (Public) {
 			get_my_address: {
 				inputs: | |,
-				outputs: |result: JsonString|,      // Q: Not sure about the return type. HashString? Or everything here JsonString?
+				outputs: |result: ZomeApiResult<JsonString>|,      // Q: Not sure about the return type. HashString? Or everything here JsonString?
 				handler: handle_get_my_address            // Q: If everything is expected to be JsonString, why ask the type at all - verbose?
 			}
     		set_handle: {
 				inputs: |handle: String|,
-				outputs: |result: JsonString|,      // Q: How does this syntax work? Closure arguments without follow up function body? :o
+				outputs: |result: ZomeApiResult<JsonString>|,      // Q: How does this syntax work? Closure arguments without follow up function body? :o
 				handler: handle_set_handle
 			}
             get_handles: {
 				inputs: | |,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_get_handles
 			}
             get_handle: {
 				inputs: |agent_key: HashString|,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_get_handle
 			}
             get_my_handle: {
 				inputs: | |,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_get_my_handle
 			}
             get_agent: {
 				inputs: |handle: HashString|,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_get_agent
 			}
             request_toss: {
 				inputs: |agent_key: Address|,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_request_toss
 			}
             receive_request: {
                 inputs: |agent_key: Address, seed_hash: HashString|,    // TODO: He should probably read it automatically from the message sender. How? Gossip?
-                outputs: |result: JsonString|,
+                outputs: |result: ZomeApiResult<JsonString>|,
                 handler: handle_receive_request
             }
             confirm_toss: {
 				inputs: |toss: TossSchema|,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_confirm_toss
 			}
             get_toss_history: {
 				inputs: | |,
-				outputs: |result: JsonString|,
+				outputs: |result: ZomeApiResult<JsonString>|,
 				handler: handle_get_toss_history
 			}
             commit_seed: {
                 inputs: |seed: SeedSchema|,
-                outputs: |result: JsonString|,
+                outputs: |result: ZomeApiResult<JsonString>|,
                 handler: handle_commit_seed
             }            
        }
