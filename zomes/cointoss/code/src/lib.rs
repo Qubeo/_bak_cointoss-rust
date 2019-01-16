@@ -122,15 +122,17 @@ pub fn handle_get_agent(_handle: HashString) -> ZomeApiResult<JsonString> {
 / pub fn handle_request_toss()
 / Request the toss - initiating the game by doing the first seed commit and sending the request to the agent through gossip (?)
 */
-pub fn handle_request_toss(_agent_key: Address) -> ZomeApiResult<JsonString> {
+
+// pub fn handle_request_toss(_agent_key: Address) -> ZomeApiResult<JsonString> {
+pub fn handle_request_toss(agent_key: Address, seed: u8) -> ZomeApiResult<HashString> {     // Q: Misleading name? Cause request over N2N?
         
     // TODO: Body of this function throws "Unable to call zome function" in the HolochainJS for some reason.
     // !!! TODO: This is the culprit block, causing the above mentioned error.
     // Yes, the rand statements. Why? No idea. External crate linking? Or some kind of buffer / array error?
     // TODO: Just a rough random salt and seed. Change to sth more secure.
     let seed = SeedSchema {
-        salt: "del".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
-        seed_value: 2 // rand::thread_rng().gen_range(0, 10)
+        salt: "del".to_string(), // TODO: randomize - rand::thread_rng().gen_range(0, 10).to_string()?
+        seed_value: seed         // Q: Randomize or let user enter thru the UI? rand::thread_rng().gen_range(0, 10)
      };
 
     // hdk::debug("Generated seed: ");
@@ -141,7 +143,7 @@ pub fn handle_request_toss(_agent_key: Address) -> ZomeApiResult<JsonString> {
     // Q: Can I call gossip functions from here? If yes, how? Or should I do it from the outside of the container?
     // TODO: Reconsider the design when I get the info. For now, passing the commited seed address to the JS.
      
-    Ok(seed_entry.into())
+    seed_entry
 }
 
 pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> ZomeApiResult<JsonString> {
@@ -221,7 +223,7 @@ fn handle_confirm_toss(toss: TossSchema) -> ZomeApiResult<JsonString> {
 / fn commit_seed()
 / return: ???
 */
-fn handle_commit_seed(_seed: SeedSchema) -> ZomeApiResult<JsonString> {
+fn handle_commit_seed(seed: SeedSchema) -> ZomeApiResult<Address> {
 
     // Validate if 9 <= seed >= 0 
     // Generate salt
@@ -234,48 +236,65 @@ fn handle_commit_seed(_seed: SeedSchema) -> ZomeApiResult<JsonString> {
     //hdk::debug(entry_arg.clone());
 
     // let seed_entry = Entry::new(EntryType::App(CTEntryType::seed.to_string()), _seed);
-    let seed_entry = Entry::App("seed".into(), _seed.into());
-    // hdk::debug(seed_entry.to_string());
-    
-    let seed_address: JsonString = match hdk::commit_entry(&seed_entry) {
+    let seed_entry = Entry::App("seed".into(), seed.into());
+    // hdk::debug(seed_entry.to_string());    
+    hdk::commit_entry(&seed_entry)
 
-        // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "seeds") {
-            Ok(address) => json!({ "address": address }).into(),
-            Err(hdk_err) => { hdk_err.into() }
-        // },
-        // Err(hdk_err) => hdk_err.into()
-    };
+      // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "seeds") {
+      //      Ok(address) => Ok(address),
+      //      Err(hdk_err) => hdk_err 
+      //  },
+      //  Err(hdk_err) => Err(hdk_err)
+    //};
 
-    Ok(seed_address)
+    // Ok(seed_address)
 }
 
 fn confirm_seed() -> ZomeApiResult<JsonString> {
     Ok(HashString::new().into())
 }
 
-fn commit_toss(toss: TossSchema) -> ZomeApiResult<JsonString> {
+fn commit_toss(toss: TossSchema) -> ZomeApiResult<Address> {
 
     let toss_entry = Entry::App("toss".into(), toss.into());
-
-    let toss_address: JsonString = match hdk::commit_entry(&toss_entry) {
+    let toss_address_result = hdk::commit_entry(&toss_entry); // {
 
         // Ok(address) => match hdk::link_entries(&AGENT_ADDRESS, &address, "tosses") {
-            Ok(address) => json!({ "address": address }).into(),
-            Err(hdk_err) => { hdk_err.into() }
+            //Ok(address) => json!({ "address": address }).into(),
+            //Err(hdk_err) => { hdk_err.into() }
         // },
         // Err(hdk_err) => hdk_err.into()
-    };
+    // };
 
     hdk::debug("commit_toss(): toss_entry: ");
-    hdk::debug(toss_address.to_string());
+    // hdk::debug(toss_address_result.clone().unwrap().to_string());
 
-    Ok(toss_address.into())
+    toss_address_result
+    //toss_address_resul
+    //Ok(toss_address.into())
 }
 
 fn generate_salt() -> ZomeApiResult<JsonString> {
     Ok(HashString::new().into())
 }
 
+
+// N2N NETWORKING ---------------------------------------------------------------------------------
+
+fn handle_send_message(to_agent: Address, message: String) -> String {
+    
+    hdk::send(to_agent, message).unwrap()
+    //let result_unwrapped = &result.unwrap();       // Q: How to clone or debug output of ZomeApiResult ?? -> Issue?
+    //hdk::debug("hdk::send(): ");
+    //hdk::debug(result.unwrap().clone());        // Q: How to work with unwrapping and cloning without violating the move?
+    //hdk::debug(result_unwrapped);
+    //result
+
+    /* match hdk::send(to_agent, message) {
+        Ok(response) => response,
+        Err(error) => error.to_string(),
+    } */
+}
 
 // ZOME DEFINITION --------------------------------------------------------------------------------
 define_zome! {
@@ -310,8 +329,7 @@ define_zome! {
         ) */
     ]
 
-    genesis: || {
-        
+    genesis: || {        
          // TODO workaround around not-yet-implemented hdk::api::AGENT_ADDRESS
          // Commit a tomporarily created agent hash to my chain and return the entry address?
             {
@@ -322,7 +340,12 @@ define_zome! {
     
     receive: |payload| {
         // simply pass back the received value, appended to a modifier
-        format!("Received: {}", payload)
+        // format!("{}", payload)
+
+        // TODO: Filter and process just the "toss request" messages in this way.
+
+        receive_toss_request();
+        payload
      }
 
     functions: {
@@ -358,8 +381,8 @@ define_zome! {
 				handler: handle_get_agent
 			}
             request_toss: {
-				inputs: |agent_key: Address|,
-				outputs: |result: ZomeApiResult<JsonString>|,
+				inputs: |agent_key: Address, seed: u8|,
+				outputs: |result: ZomeApiResult<HashString>|,
 				handler: handle_request_toss
 			}
             receive_request: {
@@ -379,9 +402,14 @@ define_zome! {
 			}
             commit_seed: {
                 inputs: |seed: SeedSchema|,
-                outputs: |result: ZomeApiResult<JsonString>|,
+                outputs: |result: ZomeApiResult<Address>|,
                 handler: handle_commit_seed
-            }            
+            }
+            send_message: {
+                inputs: |to_agent: Address, message: String|,
+                outputs: |result: String|,
+                handler: handle_send_message
+            }           
        }
     }
 }

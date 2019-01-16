@@ -94,7 +94,6 @@ pub struct AddrSchema {
 //                            Entry definitions
 //-----------------------------------------------------------------------------
 
-
 pub fn handle_definition() -> ValidatingEntryType {
         
     // Entry: "handle" for __________? The player? 
