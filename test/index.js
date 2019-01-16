@@ -98,8 +98,8 @@ test('Agent A/ Send the seed hash through N3H', (t) => {
   
     
   // ISSUE: container.call automatically expects JsonString as a result, not taking into account send_message returns string?
-  // const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));
-  const result_seedhash = player_A.call("cointoss", "main", "send_message", init_message);
+  const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));
+  // const result_seedhash = player_A.call("cointoss", "main", "send_message", init_message);
 
   console.log("JS/ send_message() result (hash of the commited seed): ");
   console.log(result_seedhash);
@@ -122,7 +122,7 @@ test('Agent A/ Commit a seed and return the entry address', (t) => {
 
 test('Agent B/ Receive the toss request and commit the toss', (t) => {
 
-  const result_receive = player_B.call("cointoss", "main", "receive_request", { agent_key: handle_address_a.address, seed_hash: g_seed_hash_a.address });
+  const result_receive = player_B.call("cointoss", "main", "receive_request", { agent_key: g_address_A, seed_hash: g_seed_hash_a });
   g_received_toss = result_receive.Ok;
 
   console.log("JS/ receive_request() result: ");

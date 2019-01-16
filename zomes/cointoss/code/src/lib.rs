@@ -148,25 +148,26 @@ pub fn handle_request_toss(agent_key: Address, seed: u8) -> ZomeApiResult<HashSt
 
 pub fn handle_receive_request(agent_key: Address, seed_hash: HashString) -> ZomeApiResult<JsonString> {
 
+    // TODO: Send notification, get the data from the UI.
+
     let my_seed = SeedSchema {
         salt: "pr".to_string(), //rand::thread_rng().gen_range(0, 10).to_string(),
         seed_value: 5 // rand::thread_rng().gen_range(0, 10)
      };
     
-    let seed_entry = handle_commit_seed(my_seed);
-    let seed_address = seed_entry.unwrap().to_string();
+    let my_seed_hash = handle_commit_seed(my_seed).unwrap();        // Q: Better use HashString or Address? (Idiomatic Holochain :) )
 
     // TODO: Either deserialize an "Address" wrapper struct, or create a macro? Or use a slicing hack?
     // Q: Best choice from the development best practices perspective?
 
     hdk::debug("handle_receive_request() seed_address:");
-    hdk::debug(seed_address.clone());
+    hdk::debug(my_seed_hash.clone());
 
     let toss = TossSchema {
         initiator: agent_key.clone(),
         initiator_seed_hash: seed_hash.clone(),
         responder: Address::from(AGENT_ADDRESS.to_string()), // Q: Why can't just use the AGENT_ADDRESS?
-        responder_seed_hash: HashString::from(&seed_address[12..58]), // TODO: What a dirty trick. BUG?: Shoots down zome function call when e.g. [14..3]. Should?
+        responder_seed_hash: my_seed_hash, // HashString::from(&seed_address[12..58]), // TODO: What a dirty trick. BUG?: Shoots down zome function call when e.g. [14..3]. Should?
         call: true
     };
 
@@ -341,10 +342,9 @@ define_zome! {
     receive: |payload| {
         // simply pass back the received value, appended to a modifier
         // format!("{}", payload)
-
         // TODO: Filter and process just the "toss request" messages in this way.
 
-        receive_toss_request();
+        // receive_toss_request();
         payload
      }
 
