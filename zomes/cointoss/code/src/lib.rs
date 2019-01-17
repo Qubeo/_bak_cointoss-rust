@@ -297,6 +297,10 @@ fn handle_send_message(to_agent: Address, message: String) -> String {
     } */
 }
 
+fn process_received_message(payload: String) -> ZomeApiResult<String> {
+        let decoded = serde:: // json!(payload)
+}
+
 // ZOME DEFINITION --------------------------------------------------------------------------------
 define_zome! {
     entries: [
@@ -344,8 +348,18 @@ define_zome! {
         // format!("{}", payload)
         // TODO: Filter and process just the "toss request" messages in this way.
 
+        process_received_message(payload).unwrap()       // Q: Shoudn't be some kind of async / promise sth? What if blocking?
         // receive_toss_request();
-        payload
+        // process_received_message();
+        //(|| {                                           // OPTIM: Can I do this without the side effects?
+        //    let sender_addr = Address::from("prdel");
+        //    let seed_hash = HashString::from("prdelhash");
+        //    // let received = handle_receive_request(sender_addr, seed_hash);      // ISSUE: Hangs up w/o signals when call handle_receive_request.
+        //    let received = handle_get_my_address();
+        //    hdk::debug("HCH/ In the receive FFEI callback.");               // ERR: This doesn't get displayed :o
+        //    //hdk::debug(received.unwrap());
+        //    received.unwrap().to_string() // payload                   // Q: This does get returned.
+        // })()
      }
 
     functions: {
