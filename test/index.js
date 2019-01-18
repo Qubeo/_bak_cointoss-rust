@@ -95,9 +95,11 @@ test('Agent A/ Send the seed hash through N3H', (t) => {
   // let msg_json = JSON.stringify("{toss_request: prdel}");    // ISSUE: This works to bypass the JSON.parse error in holochain-nodejs
   // const init_message = { to_agent: g_address_B, message: msg_json};
 
-  const request_message = "{ sender_address:" + g_address_A + ", message:" + g_seed_hash_a.toString() + " }";
-  // request_message = JSON.stringify(request_message);
+  let request_message = "{ sender_address:" + g_address_A + ", message:" + g_seed_hash_a.toString() + " }";
+  request_message = JSON.stringify(request_message);
   const init_message = { to_agent: g_address_B, message: request_message };
+
+  console.log("Stringified init_message: " + JSON.stringify(init_message));
     
   // ISSUE: container.call automatically expects JsonString as a result, not taking into account send_message returns string?
   const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));

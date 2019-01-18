@@ -35,6 +35,14 @@ use hdk::{
 mod entries;
 use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, AddrSchema};
 
+/// Represents the message 
+/// 
+#[derive(Serialize, Deserialize)]
+struct RequestMsg {
+    agent_to: Address,
+    seed_hash: HashString,
+}
+
 // TODO: Replace with the hdk implementation, when finished.
 // static AGENT_ADDRESS: &str = "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh";
 
@@ -298,7 +306,26 @@ fn handle_send_message(to_agent: Address, message: String) -> String {
 }
 
 fn process_received_message(payload: String) -> ZomeApiResult<String> {
-        let decoded = serde:: // json!(payload)
+        //let decoded = json!(payload);
+        // TODO: Deserialize the payload. How? serde::? Into struct? Tuple?        
+        // TODO: Error handling instead of unwrap()
+        
+        //let request_msg: RequestMsg = match serde_json::from_str(&payload) {
+        //    Ok(response) => response,
+        //    Err(_) => { "Error "} // RequestMsg { agent_to: "process_received_message(): Error in deserializing the payload.", seed_hash: "Error" } }
+        //};
+
+        let request_msg: RequestMsg = serde_json::from_str(&payload).unwrap();
+        //hdk::debug(serde_json::from_str(&payload).unwrap()); // Q: Or do we need some kind of debug signals?
+        let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
+        Ok(received.unwrap().to_string())
+
+        // Ok(payload)
+
+        // RequestMsg::try_from(json!(payload).into()); //.deserialize();      
+        //let agent = payload.
+        //Ok((received.unwrap().to_string())
+        // let decoded = serde_json::
 }
 
 // ZOME DEFINITION --------------------------------------------------------------------------------

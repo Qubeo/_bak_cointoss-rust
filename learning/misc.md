@@ -18,7 +18,11 @@ How to decide which logic goes where? (N2N vs. zome calls etc))
 Receive callback doesn't receive the sender address. What good are anonymous messages?
 Call of the "send_message" expects the send_message to return String. Why not ZomeApiResult<String>?
     Issue#746
-holochain-nodejs expets JsonString as a message result, giving out JSON.parse error, when it shouldn't.
+holochain-nodejs expets JsonS
+
+Error: "const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));
+                                    ^unable to call zome function: InternalFailure(RibosomeFailed("Trap: Trap { kind: Unreachable }"))"
+    Somethig killing my zome? In the process_received_message()?
 
 **Learnings**
 
