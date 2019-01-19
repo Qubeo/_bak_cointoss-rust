@@ -37,10 +37,10 @@ use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, Addr
 
 /// Represents the message 
 /// 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 struct RequestMsg {
     agent_to: Address,
-    seed_hash: HashString,
+    seed_hash: HashString
 }
 
 // TODO: Replace with the hdk implementation, when finished.
@@ -315,17 +315,30 @@ fn process_received_message(payload: String) -> ZomeApiResult<String> {
         //    Err(_) => { "Error "} // RequestMsg { agent_to: "process_received_message(): Error in deserializing the payload.", seed_hash: "Error" } }
         //};
 
-        let request_msg: RequestMsg = serde_json::from_str(&payload).unwrap();
+        //let request_msg: RequestMsg = serde_json::from_str(&payload).unwrap();
         //hdk::debug(serde_json::from_str(&payload).unwrap()); // Q: Or do we need some kind of debug signals?
-        let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
-        Ok(received.unwrap().to_string())
+        //let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
+        //Ok(received.unwrap().to_string())
 
-        // Ok(payload)
+        Ok(payload)
 
         // RequestMsg::try_from(json!(payload).into()); //.deserialize();      
         //let agent = payload.
         //Ok((received.unwrap().to_string())
         // let decoded = serde_json::
+}
+
+pub fn handle_test_fn(message: String) -> String {
+
+    // ISSUE: This seems to kill the instance somehow, but I don't get the error report / log. Why?
+    // let request_msg: RequestMsg = serde_json::from_value(json!(message)).unwrap();
+    // let request_msg: RequestMsg = serde_json::from_str("{ron: 3}").unwrap();
+    hdk::debug("HCH/ RequestMsg: ");
+    // hdk::debug(serde_json::from_str("{ron: 3}").unwrap().to_string());
+
+    return "prdel returned".to_string();
+        //hdk::debug(serde_json::from_str(&payload).unwrap()); // Q: Or do we need some kind of debug signals?
+    //let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
 }
 
 // ZOME DEFINITION --------------------------------------------------------------------------------
@@ -450,6 +463,11 @@ define_zome! {
                 inputs: |to_agent: Address, message: String|,
                 outputs: |result: String|,
                 handler: handle_send_message
+            }
+            test_fn: {
+                inputs: |message: String|,
+                outputs: |result: String|,
+                handler: handle_test_fn
             }           
        }
     }

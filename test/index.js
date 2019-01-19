@@ -96,14 +96,16 @@ test('Agent A/ Send the seed hash through N3H', (t) => {
   // const init_message = { to_agent: g_address_B, message: msg_json};
 
   let request_message = "{ sender_address:" + g_address_A + ", message:" + g_seed_hash_a.toString() + " }";
-  request_message = JSON.stringify(request_message);
+  // request_message = JSON.stringify(request_message);
   const init_message = { to_agent: g_address_B, message: request_message };
 
   console.log("Stringified init_message: " + JSON.stringify(init_message));
     
   // ISSUE: container.call automatically expects JsonString as a result, not taking into account send_message returns string?
-  const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));
+  // const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));
   // const result_seedhash = player_A.call("cointoss", "main", "send_message", init_message);
+
+  const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "test_fn", JSON.stringify(init_message));
 
   console.log("JS/ send_message() result (hash of the commited seed): ");
   console.log(result_seedhash);
