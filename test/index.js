@@ -97,7 +97,7 @@ test('Agent A/ Send the seed hash through N3H', (t) => {
 
   let request_message = "{ sender_address:" + g_address_A + ", message:" + g_seed_hash_a.toString() + " }";
   // request_message = JSON.stringify(request_message);
-  const init_message = { to_agent: g_address_B, message: request_message };
+  const init_message = { to_agent: g_address_B, seed_hash: request_message };
 
   console.log("Stringified init_message: " + JSON.stringify(init_message));
     

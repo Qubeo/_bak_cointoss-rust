@@ -39,9 +39,12 @@ use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, Addr
 /// 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 struct RequestMsg {
-    agent_to: Address,
-    seed_hash: HashString
+    agent_to: String,
+    seed_hash: String
 }
+/*    agent_to: Address,
+    seed_hash: HashString
+}*/
 
 // TODO: Replace with the hdk implementation, when finished.
 // static AGENT_ADDRESS: &str = "QmWLKuaVVLpHbCLiHuwjpuZaGpY3436HWkKKaqAmz2Axxh";
@@ -331,9 +334,17 @@ fn process_received_message(payload: String) -> ZomeApiResult<String> {
 pub fn handle_test_fn(message: String) -> String {
 
     // ISSUE: This seems to kill the instance somehow, but I don't get the error report / log. Why?
-    // let request_msg: RequestMsg = serde_json::from_value(json!(message)).unwrap();
+    // let request_msg: RequestMsg = serde_json::from_value(json!("{prdel:housky}")).unwrap();
     // let request_msg: RequestMsg = serde_json::from_str("{ron: 3}").unwrap();
+    
+
+    // TODO: Zjistit, jestli to failuje i mimo HCH aplikaci, prostě jen v Rustu nebo WASM Rustu.
+    let foo_json = json!({"agent_to": "prdel", "message": "housky"});
+    let msg: RequestMsg = serde_json::from_str(&foo_json.to_string()).unwrap();
+
     hdk::debug("HCH/ RequestMsg: ");
+    hdk::debug(msg);
+  
     // hdk::debug(serde_json::from_str("{ron: 3}").unwrap().to_string());
 
     return "prdel returned".to_string();
