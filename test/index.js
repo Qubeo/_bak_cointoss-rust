@@ -107,7 +107,7 @@ test('Agent A/ Send the seed hash through N3H', (t) => {
 
   const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "test_fn", JSON.stringify(init_message));
 
-  console.log("JS/ send_message() result (hash of the commited seed): ");
+  // console.log("JS/ send_message() result (hash of the commited seed): ");
   console.log(result_seedhash);
   t.end();
 });
