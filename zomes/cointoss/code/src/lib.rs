@@ -39,7 +39,7 @@ use crate::entries::{CTEntryType, TossSchema, TossResultSchema, SeedSchema, Addr
 /// 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 struct RequestMsg {
-    agent_to: String,
+    agent_from: String,
     seed_hash: String
 }
 /*    agent_to: Address,
@@ -293,15 +293,16 @@ fn generate_salt() -> ZomeApiResult<JsonString> {
 
 // N2N NETWORKING ---------------------------------------------------------------------------------
 
-fn handle_send_message(to_agent: Address, message: String) -> String {
+fn handle_send_message(agent_to: Address, message: String) -> String {
     
-    hdk::send(to_agent, message).unwrap()
-    //let result_unwrapped = &result.unwrap();       // Q: How to clone or debug output of ZomeApiResult ?? -> Issue?
-    //hdk::debug("hdk::send(): ");
+    hdk::debug("hdk::send(): ");
+    hdk::debug(message.clone());
+    // hdk::send(agent_to, message).unwrap()
+    //let result_unwrapped = &result.unwrap();       // Q: How to clone or debug output of ZomeApiResult ?? -> Issue? 
     //hdk::debug(result.unwrap().clone());        // Q: How to work with unwrapping and cloning without violating the move?
     //hdk::debug(result_unwrapped);
     //result
-
+    "ppp".to_string()
     /* match hdk::send(to_agent, message) {
         Ok(response) => response,
         Err(error) => error.to_string(),
@@ -319,11 +320,15 @@ fn process_received_message(payload: String) -> ZomeApiResult<String> {
         //};
 
         //let request_msg: RequestMsg = serde_json::from_str(&payload).unwrap();
+
+        // Q: Why the messages don't show? Where is this being actually run?
         //hdk::debug(serde_json::from_str(&payload).unwrap()); // Q: Or do we need some kind of debug signals?
         //let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
         //Ok(received.unwrap().to_string())
 
-        Ok(payload)
+        let msg: RequestMsg = serde_json::from_str(&payload.to_string()).unwrap();
+
+        Ok(msg.seed_hash)
 
         // RequestMsg::try_from(json!(payload).into()); //.deserialize();      
         //let agent = payload.
@@ -471,7 +476,7 @@ define_zome! {
                 handler: handle_commit_seed
             }
             send_message: {
-                inputs: |to_agent: Address, message: String|,
+                inputs: |agent_to: Address, message: String|,
                 outputs: |result: String|,
                 handler: handle_send_message
             }
