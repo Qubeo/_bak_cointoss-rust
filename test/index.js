@@ -95,14 +95,17 @@ test('Agent A/ Send the seed hash through N3H', (t) => {
   // let msg_json = JSON.stringify("{toss_request: prdel}");    // ISSUE: This works to bypass the JSON.parse error in holochain-nodejs
   // const init_message = { to_agent: g_address_B, message: msg_json};
 
-  let request_message = "{ agent_from:" + g_address_A + ", seed_hash:" + g_seed_hash_a.toString() + " }";
-  // request_message = JSON.stringify(request_message);
+ // let request_message = "{ agent_from:" + g_address_A + ", seed_hash:" + g_seed_hash_a.toString() + " }";
+  let request_message = { agent_from: + g_address_A, seed_hash: g_seed_hash_a.toString() };
+  // request_message = JSON.stringify(request_message);                        // Q: Still not sure, whether needed.
   const init_message = { agent_to: g_address_B, message: request_message };
 
   console.log("Stringified init_message: " + JSON.stringify(init_message));
     
   // ISSUE: container.call automatically expects JsonString as a result, not taking into account send_message returns string?
+  
   // Q: What am I doing here, in architectural terms? Shouldn't I be calling the messaging through the container and instances functions?
+  // Q: Doesn't the send_message return bullshit, instead of receive() of B returning?
   const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "send_message", JSON.stringify(init_message));
   // const result_seedhash = player_A.call("cointoss", "main", "send_message", init_message);
   // const result_seedhash = container.callRaw("prdelA::./dist/bundle.json", "cointoss", "main", "test_fn", JSON.stringify(init_message));

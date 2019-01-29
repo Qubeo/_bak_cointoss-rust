@@ -296,13 +296,13 @@ fn generate_salt() -> ZomeApiResult<JsonString> {
 fn handle_send_message(agent_to: Address, message: String) -> String {
     
     hdk::debug("hdk::send(): ");
-    hdk::debug(message.clone());
-    // hdk::send(agent_to, message).unwrap()
+    //hdk::debug(agent_to.clone().to_string());     // Q: Doesn't get displayed. Cause in WASM? Or?
+    hdk::send(agent_to, message).unwrap()
     //let result_unwrapped = &result.unwrap();       // Q: How to clone or debug output of ZomeApiResult ?? -> Issue? 
     //hdk::debug(result.unwrap().clone());        // Q: How to work with unwrapping and cloning without violating the move?
     //hdk::debug(result_unwrapped);
     //result
-    "ppp".to_string()
+    // message.clone().to_string()
     /* match hdk::send(to_agent, message) {
         Ok(response) => response,
         Err(error) => error.to_string(),
@@ -326,7 +326,7 @@ fn process_received_message(payload: String) -> ZomeApiResult<String> {
         //let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
         //Ok(received.unwrap().to_string())
 
-        let msg: RequestMsg = serde_json::from_str(&payload.to_string()).unwrap();
+        let msg: RequestMsg = serde_json::from_str(json!(&payload.to_string()).unwrap();
 
         Ok(msg.seed_hash)
 
