@@ -105,7 +105,7 @@ pub fn handle_definition() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |handle: HandleSchema, ctx: hdk::ValidationData| { Ok(()) }
+        validation: |handle: HandleSchema, _validation_data: hdk::ValidationData| { Ok(()) }
     )
 } 
 
@@ -118,7 +118,7 @@ pub fn seed_definition() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |seed: SeedSchema, ctx: hdk::ValidationData| { Ok(()) },
+        validation: |seed: SeedSchema, _validation_data: hdk::ValidationData| { Ok(()) },
         links: [
             from!(
                 "%agent_id",
@@ -126,7 +126,7 @@ pub fn seed_definition() -> ValidatingEntryType {
                 validation_package: || {
                     hdk::ValidationPackageDefinition::ChainFull
                 },
-                validation: |source: Address, _target: Address, ctx: hdk::ValidationData| {
+                validation: |source: Address, _target: Address, _validation_data: hdk::ValidationData| {
                     Ok(())
                 })
             ]
@@ -142,7 +142,7 @@ pub fn toss_definition() -> ValidatingEntryType {
         validation_package: || { 
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |toss: TossSchema, ctx: hdk::ValidationData| { Ok(()) }
+        validation: |toss: TossSchema, _validation_data: hdk::ValidationData| { Ok(()) }
     )
 }
 
@@ -155,6 +155,6 @@ pub fn toss_result_definition() -> ValidatingEntryType {
         validation_package: || { 
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |toss_result: TossResultSchema, ctx: hdk::ValidationData| { Ok(()) }
+        validation: |toss_result: TossResultSchema, _validation_data: hdk::ValidationData| { Ok(()) }
     )
 }
