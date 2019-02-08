@@ -297,7 +297,7 @@ fn handle_send_message(agent_to: Address, message: String) -> String {
     
     hdk::debug("hdk::send(): ");
     //hdk::debug(agent_to.clone().to_string());     // Q: Doesn't get displayed. Cause in WASM? Or?
-    hdk::send(agent_to, message).unwrap()
+    hdk::send(agent_to, message, 60000.into()).unwrap()
     //let result_unwrapped = &result.unwrap();       // Q: How to clone or debug output of ZomeApiResult ?? -> Issue? 
     //hdk::debug(result.unwrap().clone());        // Q: How to work with unwrapping and cloning without violating the move?
     //hdk::debug(result_unwrapped);
@@ -323,16 +323,16 @@ fn process_received_message(payload: String) -> ZomeApiResult<String> {
 
         // Q: Why the messages don't show? Where is this being actually run?
         //hdk::debug(serde_json::from_str(&payload).unwrap()); // Q: Or do we need some kind of debug signals?
-        //let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
+        // let received = handle_receive_request(request_msg.agent_to.clone(), request_msg.seed_hash.clone()); 
         //Ok(received.unwrap().to_string())
 
-        let msg: RequestMsg = serde_json::from_str(json!(&payload.to_string()).unwrap();
+        // let msg: RequestMsg = serde_json::from_str(json!(&payload.to_string()).unwrap();
 
-        Ok(msg.seed_hash)
+        // Ok(msg.seed_hash)
 
         // RequestMsg::try_from(json!(payload).into()); //.deserialize();      
         //let agent = payload.
-        //Ok((received.unwrap().to_string())
+        Ok(payload.clone()) //.unwrap().to_string())
         // let decoded = serde_json::
 }
 
@@ -418,8 +418,7 @@ define_zome! {
         // })()
      }
 
-    functions: {
-        main (Public) {
+    functions: [
 			get_my_address: {
 				inputs: | |,
 				outputs: |result: ZomeApiResult<JsonString>|,       // Q: Not sure about the return type. HashString? Or everything here JsonString?
@@ -485,7 +484,10 @@ define_zome! {
                 outputs: |result: String|,
                 handler: handle_test_fn
             }           
-       }
+    ]
+    
+    capabilities: {
+        public (Public) [get_my_address, set_handle, get_handles, get_handle, get_my_handle, get_agent, request_toss, receive_request, confirm_toss, get_toss_history, commit_seed, send_message, test_fn]
     }
 }
 
